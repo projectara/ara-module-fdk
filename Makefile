@@ -39,6 +39,8 @@ all: $(obj)
 	cd $(NUTTX_ROOT)/nuttx; OOT_OBJS=$(obj) $(MAKE)
 
 init:
+	git submodule init
+	git submodule update
 	cp scripts/Make.defs $(NUTTX_ROOT)/nuttx/
 	cp defconfig $(NUTTX_ROOT)/nuttx/.config
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
