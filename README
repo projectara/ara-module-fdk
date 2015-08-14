@@ -1,0 +1,9 @@
+== Build the skeleton
+
+1. Initialize the module repository
+
+    $ make init
+
+2. Build the module FW image
+
+    $ make
