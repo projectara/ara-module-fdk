@@ -1,3 +1,6 @@
 [submodule "nuttx"]
 	path = nuttx
 	url = https://github.com/projectara/nuttx.git
+[submodule "manifesto"]
+	path = manifesto
+	url = https://github.com/projectara/manifesto.git
