@@ -26,7 +26,7 @@
 #
 # Author: Fabien Parent <fparent@baylibre.com>
 
-NUTTX_ROOT ?= ../nuttx
+NUTTX_ROOT ?= ./nuttx
 TOPDIR := $(NUTTX_ROOT)/nuttx
 
 -include $(NUTTX_ROOT)/nuttx/.config
