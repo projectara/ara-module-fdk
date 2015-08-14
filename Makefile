@@ -42,7 +42,9 @@ depend = \
 	mv $(@:.o=.d).$$$$ $(@:.o=.d)
 
 all: $(obj)
-	cd $(NUTTX_ROOT)/nuttx; PATH=$(CWD)/manifesto:$(PATH) OOT_OBJS=$(obj) $(MAKE)
+	cd $(NUTTX_ROOT)/nuttx; \
+	PATH=$(CWD)/manifesto:$(PATH) OOT_OBJS=$(obj) $(MAKE) && \
+	cp nuttx $(CWD)/nuttx.elf && cp nuttx.bin System.map $(CWD)
 
 init:
 	git submodule init
@@ -52,7 +54,7 @@ init:
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
 
 clean:
-	rm -f $(obj) $(obj:.o=.d)
+	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map
 
 distclean: clean
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) apps_distclean && $(MAKE) distclean
