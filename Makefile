@@ -30,11 +30,16 @@ CWD := $(shell pwd)
 NUTTX_ROOT ?= ./nuttx
 TOPDIR := $(NUTTX_ROOT)/nuttx
 
+obj += board-skeleton.o
+
 -include $(NUTTX_ROOT)/nuttx/.config
 -include $(NUTTX_ROOT)/nuttx/arch/arm/src/armv7-m/Toolchain.defs
 -include $(NUTTX_ROOT)/nuttx/configs/ara/bridge/tsb-makefile.common
 
-obj += board-skeleton.o
+depend = \
+	sed 's,\($*\)\.o[ :]*,\1.o $(@:.o=.d): ,g' < $(@:.o=.d) > $(@:.o=.d).$$$$; \
+	rm $(@:.o=.d); \
+	mv $(@:.o=.d).$$$$ $(@:.o=.d)
 
 all: $(obj)
 	cd $(NUTTX_ROOT)/nuttx; PATH=$(CWD)/manifesto:$(PATH) OOT_OBJS=$(obj) $(MAKE)
@@ -47,15 +52,18 @@ init:
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
 
 clean:
-	rm -f $(obj)
+	rm -f $(obj) $(obj:.o=.d)
 
 distclean: clean
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) apps_distclean && $(MAKE) distclean
 
 %.o: %.c
 	echo "CC\t $@"
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) -MD -MP $(CFLAGS) -c $< -o $@
+	$(call depend)
 	cp $@ $(NUTTX_ROOT)/nuttx/configs/ara/bridge/src
+
+-include $(obj:.o=.d)
 
 .PHONY: all clean distclean init
 ifndef VERBOSE
