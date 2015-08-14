@@ -26,6 +26,7 @@
 #
 # Author: Fabien Parent <fparent@baylibre.com>
 
+CWD := $(shell pwd)
 NUTTX_ROOT ?= ./nuttx
 TOPDIR := $(NUTTX_ROOT)/nuttx
 
@@ -36,7 +37,7 @@ TOPDIR := $(NUTTX_ROOT)/nuttx
 obj += board-skeleton.o
 
 all: $(obj)
-	cd $(NUTTX_ROOT)/nuttx; OOT_OBJS=$(obj) $(MAKE)
+	cd $(NUTTX_ROOT)/nuttx; PATH=$(CWD)/manifesto:$(PATH) OOT_OBJS=$(obj) $(MAKE)
 
 init:
 	git submodule init
