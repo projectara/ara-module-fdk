@@ -50,14 +50,18 @@ init:
 	git submodule init
 	git submodule update
 	cp scripts/Make.defs $(NUTTX_ROOT)/nuttx/
-	cp defconfig $(NUTTX_ROOT)/nuttx/.config
+	cp .config $(NUTTX_ROOT)/nuttx/.config
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
+
+%_defconfig: configs/%_defconfig
+	cp $< .config
 
 clean:
 	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map
 
 distclean: clean
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) apps_distclean && $(MAKE) distclean
+	rm -f .config
 
 %.o: %.c
 	echo "CC\t $@"
