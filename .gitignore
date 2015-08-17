@@ -1,2 +1,6 @@
 *.o
 *.d
+.config
+System.map
+nuttx.bin
+nuttx.elf
