@@ -54,6 +54,7 @@ init:
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
 
 %_defconfig: configs/%_defconfig
+	echo "Loading $<..."
 	cp $< .config
 
 clean:
