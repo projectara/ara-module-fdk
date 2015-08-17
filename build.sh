@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright (c) 2015 Google, Inc.
 # All rights reserved.
 #
@@ -26,66 +27,11 @@
 #
 # Author: Fabien Parent <fparent@baylibre.com>
 
-CWD := $(shell pwd)
-NUTTX_ROOT ?= ./nuttx
-TOPDIR := $(NUTTX_ROOT)/nuttx
-BUILDDIR := $(NUTTX_ROOT)/oot/nuttx
+source $1/nuttx/build_ara_image.sh
 
-obj += board-skeleton.o
+buildname=oot
+defconfigFile=$1/.config
+buildbase=$1/nuttx
+configpath=$1/scripts/
 
--include $(NUTTX_ROOT)/nuttx/.config
--include $(NUTTX_ROOT)/nuttx/arch/arm/src/armv7-m/Toolchain.defs
--include $(NUTTX_ROOT)/nuttx/configs/ara/bridge/tsb-makefile.common
-
-depend = \
-	sed 's,\($*\)\.o[ :]*,\1.o $(@:.o=.d): ,g' < $(@:.o=.d) > $(@:.o=.d).$$$$; \
-	rm $(@:.o=.d); \
-	mv $(@:.o=.d).$$$$ $(@:.o=.d)
-
-prepend-dir-to = $(addprefix $2/,$1)
-prepend-dir = $(foreach d,$($1),$(call prepend-dir-to,$(d),$2))
-
-all: $(obj)
-	PATH=$(CWD)/manifesto:$(PATH) \
-	OOT_OBJS=$(call prepend-dir,obj,$(CWD)) \
-	./build.sh $(CWD) && \
-	cp $(BUILDDIR)/nuttx $(CWD)/nuttx.elf && \
-	cp $(BUILDDIR)/nuttx.bin $(BUILDDIR)/System.map $(CWD)
-
-init:
-	git submodule init
-	git submodule update
-	cp scripts/Make.defs $(NUTTX_ROOT)/nuttx/
-	cp .config $(NUTTX_ROOT)/nuttx/.config
-	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
-
-update:
-	git submodule update
-
-%_defconfig: configs/%_defconfig
-	echo "Loading $<..."
-	cp $< .config
-
-menuconfig:
-	cp .config $(TOPDIR)/.config
-	cd $(TOPDIR); APPSDIR=$(CONFIG_APPS_DIR) kconfig-mconf ./Kconfig
-	cp $(TOPDIR)/.config .config
-
-clean:
-	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map
-
-distclean: clean
-	cd $(NUTTX_ROOT)/nuttx; $(MAKE) apps_distclean && $(MAKE) distclean
-	rm -f .config
-
-%.o: %.c
-	echo "CC\t $@"
-	$(CC) -MD -MP $(CFLAGS) -c $< -o $@
-	$(call depend)
-
--include $(obj:.o=.d)
-
-.PHONY: all clean distclean init
-ifndef VERBOSE
-.SILENT:
-endif
+build_image_from_defconfig
