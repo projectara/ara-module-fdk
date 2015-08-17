@@ -53,6 +53,9 @@ init:
 	cp .config $(NUTTX_ROOT)/nuttx/.config
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
 
+update:
+	git submodule update
+
 %_defconfig: configs/%_defconfig
 	echo "Loading $<..."
 	cp $< .config
