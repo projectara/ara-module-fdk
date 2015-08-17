@@ -48,7 +48,7 @@ prepend-dir = $(foreach d,$($1),$(call prepend-dir-to,$(d),$2))
 all: $(obj)
 	PATH=$(CWD)/manifesto:$(PATH) \
 	OOT_OBJS=$(call prepend-dir,obj,$(CWD)) \
-	./build.sh $(CWD) && \
+	./build.sh $(CWD) $(NUTTX_ROOT) && \
 	cp $(BUILDDIR)/nuttx $(CWD)/nuttx.elf && \
 	cp $(BUILDDIR)/nuttx.bin $(BUILDDIR)/System.map $(CWD)
 

@@ -27,11 +27,11 @@
 #
 # Author: Fabien Parent <fparent@baylibre.com>
 
-source $1/nuttx/build_ara_image.sh
+source $2/build_ara_image.sh
 
 buildname=oot
 defconfigFile=$1/.config
-buildbase=$1/nuttx
+buildbase=$2
 configpath=$1/scripts/
 
 build_image_from_defconfig
