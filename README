@@ -1,9 +1,28 @@
 == Build the skeleton
 
-1. Initialize the module repository
+1. Load the defconfig
+
+    $ make skeleton_defconfig
+
+2. Initialize the module repository
 
     $ make init
 
-2. Build the module FW image
+3. Build the module FW image
 
     $ make
+
+
+== Build the skeleton with an alternative nuttx directory
+
+1. Load the defconfig
+
+    $ make skeleton_defconfig
+
+2. Initialize the module repository
+
+    $ NUTTX_ROOT=/path/to/nuttx make init
+
+3. Build the module FW image
+
+    $ NUTTX_ROOT=/path/to/nuttx make
