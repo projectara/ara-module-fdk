@@ -57,6 +57,11 @@ init:
 	echo "Loading $<..."
 	cp $< .config
 
+menuconfig:
+	cp .config $(TOPDIR)/.config
+	cd $(TOPDIR); APPSDIR=$(CONFIG_APPS_DIR) kconfig-mconf ./Kconfig
+	cp $(TOPDIR)/.config .config
+
 clean:
 	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map
 
