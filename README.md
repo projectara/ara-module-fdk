@@ -59,6 +59,11 @@
 
     >$ make menuconfig
 
+    In order to use make menuconfig, you need to have installed on your system
+    the package Kconfig-frontends.
+
+    To install it, read the section "Installing kconfig-frontends"
+
 * Save a newer configuration file
 
     >$ cp .config configs/{MODULE_NAME}_defconfig
@@ -66,3 +71,14 @@
 * Clean the repository
 
     >$ make distclean
+
+# Installing kconfig-frontends
+
+Run the following commands to install kconfig-frontends:
+
+    1. wget http://ymorin.is-a-geek.org/download/kconfig-frontends/kconfig-frontends-3.12.0.0.tar.bz2
+    2. tar xjvf kconfig-frontends-3.12.0.0.tar.bz2
+    3. cd kconfig-frontends-3.12.0.0
+    4. ./configure
+    5. make
+    6. sudo make install
