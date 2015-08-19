@@ -1,28 +1,68 @@
-== Build the skeleton
+# Getting Started
 
-1. Load the defconfig
+1. Clone ARA Module FDK
 
-    $ make skeleton_defconfig
+    >$ git clone https://github.com/Fabo/ara-module-fdk.git
 
-2. Initialize the module repository
+2. Go into the repository
 
-    $ make init
+    >$ cd ./ara-module-fdk
 
-3. Build the module FW image
+3. Load the configuration you want (e.g. skeleton_defconfig)
 
-    $ make
+    >$ make skeleton_defconfig
 
+4. Initialize the module repository
 
-== Build the skeleton with an alternative nuttx directory
+    >$ make init
 
-1. Load the defconfig
+    This command will download nuttx and manifesto, then initialize nuttx. This
+    command should be run once before using the repository for the first time,
+    or after running the "make distclean" command.
 
-    $ make skeleton_defconfig
+5. Build the module FW image
 
-2. Initialize the module repository
+    >$ make
 
-    $ NUTTX_ROOT=/path/to/nuttx make init
+    Once built, you will find the following files in the root of the repository:
 
-3. Build the module FW image
+        1. nuttx.elf -> Firmware ELF image \
+        2. nuttx.bin -> Firmware BIN image (raw binary) \
+        3. System.map -> Map linking each function of the firmware to itsaddress.
 
-    $ NUTTX_ROOT=/path/to/nuttx make
+# Developing a new module
+
+{MODULE_NAME} should be replaced by the name of your module. No space
+    is allowed in the module name.
+
+* Rename the skeleton defconfig and board file to fit the purpose of your module.
+
+    Steps:
+    1. rename configs/skeleton_defconfig to configs/{MODULE_NAME}_defconfig
+    2. rename the board file board-skeleton.c to board-{MODULE_NAME}.c
+    3. update the Makefile to use your renamed board file:
+        >-obj += board-skeleton.o \
+        >+obj += board-{MODULE_NAME}.o
+
+* Adding new C files to your build
+
+    >obj += filename.o
+
+    Add this in "Makefile". Note that the extension should be ".o" and not
+    ".c" in the Makefile.
+
+* Update the NuttX and Manifesto repository to get the latest upstream changes
+
+    >$ make update
+
+* Make changes to the configuration
+
+    >$ make menuconfig
+
+* Save a newer configuration file
+
+    >$ cp .config configs/{MODULE_NAME}_defconfig
+
+* Clean the repository
+
+    >$ make distclean
