@@ -30,6 +30,10 @@
 
 #include <syslog.h>
 
+void ara_module_early_init(void)
+{
+}
+
 void ara_module_init(void)
 {
     lowsyslog("Skeleton Module init\n");
