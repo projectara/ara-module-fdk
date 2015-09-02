@@ -54,13 +54,13 @@ all: $(obj)
 
 init:
 	git submodule init
-	git submodule update
+	git submodule update --remote
 	cp scripts/Make.defs $(NUTTX_ROOT)/nuttx/
 	cp .config $(NUTTX_ROOT)/nuttx/.config
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
 
 update:
-	git submodule update
+	git submodule update --remote
 
 %_defconfig: configs/%_defconfig
 	echo "Loading $<..."
