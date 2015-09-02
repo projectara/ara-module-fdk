@@ -31,7 +31,8 @@ source $2/build_ara_image.sh
 
 buildname=oot
 defconfigFile=$1/.config
-buildbase=$2
+buildbase=$1/nuttx
 configpath=$1/scripts/
 
+cd nuttx
 build_image_from_defconfig
