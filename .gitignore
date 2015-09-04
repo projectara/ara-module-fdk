@@ -4,3 +4,4 @@
 System.map
 nuttx.bin
 nuttx.elf
+*.tftf

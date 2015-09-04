@@ -59,6 +59,11 @@ init:
 	cp .config $(NUTTX_ROOT)/nuttx/.config
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
 
+tftf: all
+	./bootrom-tools/create-tftf --elf nuttx.elf --unipro-mfg 0x126 \
+	                            --unipro-pid 0x1000 --ara-stage 2 \
+	                            --start 0x`grep '\bReset_Handler$$' System.map | cut -d ' ' -f 1`
+
 update:
 	git submodule update --remote
 
@@ -72,7 +77,7 @@ menuconfig:
 	cp $(TOPDIR)/.config .config
 
 clean:
-	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map
+	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map *.tftf
 
 distclean: clean
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) apps_distclean && $(MAKE) distclean
