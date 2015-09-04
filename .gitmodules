@@ -4,3 +4,6 @@
 [submodule "manifesto"]
 	path = manifesto
 	url = https://github.com/projectara/manifesto.git
+[submodule "bootrom-tools"]
+	path = bootrom-tools
+	url = https://github.com/projectara/bootrom-tools.git
