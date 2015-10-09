@@ -45,7 +45,7 @@ depend = \
 prepend-dir-to = $(addprefix $2/,$1)
 prepend-dir = $(foreach d,$($1),$(call prepend-dir-to,$(d),$2))
 
-all: $(obj)
+all: nuttx_init $(obj)
 	PATH=$(CWD)/manifesto:$(PATH) \
 	OOT_OBJS="$(call prepend-dir,obj,$(CWD))" \
 	./build.sh $(CWD) $(NUTTX_ROOT) && \
@@ -55,6 +55,8 @@ all: $(obj)
 init:
 	git submodule init
 	git submodule update --remote
+
+nuttx_init:
 	cp scripts/Make.defs $(NUTTX_ROOT)/nuttx/
 	cp .config $(NUTTX_ROOT)/nuttx/.config
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
