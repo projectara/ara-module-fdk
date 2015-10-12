@@ -45,12 +45,17 @@ depend = \
 prepend-dir-to = $(addprefix $2/,$1)
 prepend-dir = $(foreach d,$($1),$(call prepend-dir-to,$(d),$2))
 
-all: nuttx_init $(obj)
+all: nuttx_init build_fdk_bootstrap
 	PATH=$(CWD)/manifesto:$(PATH) \
 	OOT_OBJS="$(call prepend-dir,obj,$(CWD))" \
 	./build.sh $(CWD) $(NUTTX_ROOT) && \
 	cp $(BUILDDIR)/nuttx $(CWD)/nuttx.elf && \
 	cp $(BUILDDIR)/nuttx.bin $(BUILDDIR)/System.map $(CWD)
+
+build_fdk: $(obj)
+
+build_fdk_bootstrap:
+	$(MAKE) build_fdk
 
 init:
 	git submodule init
