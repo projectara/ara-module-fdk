@@ -31,6 +31,7 @@ NUTTX_ROOT ?= ./nuttx
 TOPDIR := $(NUTTX_ROOT)/nuttx
 BUILDDIR := $(NUTTX_ROOT)/oot/nuttx
 
+manifest := skeleton-manifest.mnfs
 obj += board-skeleton.o
 
 -include $(NUTTX_ROOT)/nuttx/.config
@@ -48,6 +49,7 @@ prepend-dir = $(foreach d,$($1),$(call prepend-dir-to,$(d),$2))
 all: nuttx_init build_fdk_bootstrap
 	PATH=$(CWD)/manifesto:$(PATH) \
 	OOT_OBJS="$(call prepend-dir,obj,$(CWD))" \
+	OOT_MANIFEST="$(CWD)/$(manifest)" \
 	./build.sh $(CWD) $(NUTTX_ROOT) && \
 	cp $(BUILDDIR)/nuttx $(CWD)/nuttx.elf && \
 	cp $(BUILDDIR)/nuttx.bin $(BUILDDIR)/System.map $(CWD)
@@ -64,7 +66,7 @@ init:
 nuttx_init:
 	cp scripts/Make.defs $(NUTTX_ROOT)/nuttx/
 	cp .config $(NUTTX_ROOT)/nuttx/.config
-	cd $(NUTTX_ROOT)/nuttx; $(MAKE) context
+	cd $(NUTTX_ROOT)/nuttx; $(MAKE) OOT_MANIFEST="$(CWD)/$(manifest)" context
 
 tftf: all
 	./bootrom-tools/create-tftf --elf nuttx.elf --unipro-mfg 0x126 \
@@ -84,7 +86,7 @@ menuconfig:
 	cp $(TOPDIR)/.config .config
 
 clean:
-	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map *.tftf
+	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map *.tftf *.mnfb
 
 distclean: clean
 	cd $(NUTTX_ROOT)/nuttx; $(MAKE) apps_distclean && $(MAKE) distclean

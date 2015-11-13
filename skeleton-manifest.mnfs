@@ -1,0 +1,156 @@
+;
+; Copyright (c) 2015 Google, Inc.
+; All rights reserved.
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+; 1. Redistributions of source code must retain the above copyright notice,
+; this list of conditions and the following disclaimer.
+; 2. Redistributions in binary form must reproduce the above copyright notice,
+; this list of conditions and the following disclaimer in the documentation
+; and/or other materials provided with the distribution.
+; 3. Neither the name of the copyright holder nor the names of its
+; contributors may be used to endorse or promote products derived from this
+; software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+; THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+; PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+; CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+; WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+; ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+; Manifest for all Protocols
+;
+
+[manifest-header]
+version-major = 0
+version-minor = 1
+
+[interface-descriptor]
+vendor-string-id = 1
+product-string-id = 2
+
+; Interface vendor string (id can't be 0)
+[string-descriptor 1]
+string = Project Ara
+
+; Interface product string (id can't be 0)
+[string-descriptor 2]
+string = All Modules
+
+; Control protocol on CPort 0
+[cport-descriptor 0]
+bundle = 0
+protocol = 0x00
+
+; Control protocol Bundle 0
+[bundle-descriptor 0]
+class = 0
+
+; GPIO protocol on CPort 3
+[cport-descriptor 3]
+bundle = 2
+protocol = 0x02
+
+[bundle-descriptor 2]
+class = 2
+
+; I2C protocol on CPort 4
+[cport-descriptor 4]
+bundle = 3
+protocol = 0x03
+
+[bundle-descriptor 3]
+class = 3
+
+; UART protocol on CPort 5
+[cport-descriptor 5]
+bundle = 4
+protocol = 0x04
+
+[bundle-descriptor 4]
+class = 4
+
+; USB protocol on CPort 6
+[cport-descriptor 6]
+bundle = 6
+protocol = 0x06
+
+[bundle-descriptor 6]
+class = 6
+
+; SDIO protocol on CPort 7
+[cport-descriptor 7]
+bundle = 7
+protocol = 0x07
+
+[bundle-descriptor 7]
+class = 7
+
+; BATTERY protocol on CPort 8
+[cport-descriptor 8]
+bundle = 8
+protocol = 0x08
+
+[bundle-descriptor 8]
+class = 8
+
+; PWM protocol on CPort 9
+[cport-descriptor 9]
+bundle = 9
+protocol = 0x09
+
+[bundle-descriptor 9]
+class = 9
+
+; SPI protocol on CPort 10
+[cport-descriptor 10]
+bundle = 11
+protocol = 0x0b
+
+[bundle-descriptor 11]
+class = 11
+
+; DISPLAY (0x0c) automatically set up by SVC to use CPort 16
+
+; Skipping CAMERA (0x0d)
+
+; Skipping SENSOR (0x0e)
+
+; VIBRATOR protocol on CPort 11
+[cport-descriptor 11]
+bundle = 16
+protocol = 0x10
+
+[bundle-descriptor 16]
+class = 16
+
+; LOOPBACK protocol on CPort 12
+[cport-descriptor 12]
+bundle = 17
+protocol = 0x11
+
+[bundle-descriptor 17]
+class = 17
+
+; HID protocol on CPort 13
+[cport-descriptor 13]
+bundle = 5
+protocol = 0x05
+
+[bundle-descriptor 5]
+class = 5
+
+; Lights protocol on CPort 14
+[cport-descriptor 14]
+bundle = 15
+protocol = 0x0f
+
+[bundle-descriptor 15]
+class = 15
