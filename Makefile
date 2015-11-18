@@ -25,81 +25,93 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Fabien Parent <fparent@baylibre.com>
+# Author: Joel Porquet <joel@porquet.org>
 
 CWD := $(shell pwd)
-NUTTX_ROOT ?= ./nuttx
+
+# the module directory can be easily overriden
+MODULE ?= module-skeleton
+MODULE_PATH := $(CWD)/$(MODULE)
+include $(MODULE_PATH)/module.mk
+
+BUILDNAME := oot-$(MODULE)
+
+# where to copy the binaries
+OUTPUT ?= output-$(MODULE)
+
+SCRIPTPATH := $(CWD)/scripts
+
+NUTTX_ROOT ?= $(CWD)/nuttx
 TOPDIR := $(NUTTX_ROOT)/nuttx
-BUILDDIR := $(NUTTX_ROOT)/oot/nuttx
-
-manifest := skeleton-manifest.mnfs
-obj += board-skeleton.o
-
--include $(NUTTX_ROOT)/nuttx/.config
--include $(NUTTX_ROOT)/nuttx/arch/arm/src/armv7-m/Toolchain.defs
--include $(NUTTX_ROOT)/nuttx/configs/ara/bridge/tsb-makefile.common
-
-depend = \
-	sed 's,\($*\)\.o[ :]*,\1.o $(@:.o=.d): ,g' < $(@:.o=.d) > $(@:.o=.d).$$$$; \
-	rm $(@:.o=.d); \
-	mv $(@:.o=.d).$$$$ $(@:.o=.d)
+IMAGEDIR := $(NUTTX_ROOT)/$(BUILDNAME)/image
 
 prepend-dir-to = $(addprefix $2/,$1)
 prepend-dir = $(foreach d,$($1),$(call prepend-dir-to,$(d),$2))
 
-all: nuttx_init build_fdk_bootstrap
-	PATH=$(CWD)/manifesto:$(PATH) \
-	OOT_OBJS="$(call prepend-dir,obj,$(CWD))" \
-	OOT_MANIFEST="$(CWD)/$(manifest)" \
-	./build.sh $(CWD) $(NUTTX_ROOT) && \
-	cp $(BUILDDIR)/nuttx $(CWD)/nuttx.elf && \
-	cp $(BUILDDIR)/nuttx.bin $(BUILDDIR)/System.map $(CWD)
+OOT_CONFIG := $(call prepend-dir,config,$(MODULE_PATH))
+OOT_BOARD := $(call prepend-dir,board-files,$(MODULE_PATH))
+OOT_MANIFEST := $(call prepend-dir,manifest,$(MODULE_PATH))
 
-build_fdk: $(obj)
+# variables needed for $(SCRIPTPATH)/build.sh
+export BUILDNAME
+export OOT_CONFIG
+export NUTTX_ROOT
+export SCRIPTPATH
 
-build_fdk_bootstrap:
-	$(MAKE) build_fdk
+# variables needed when compiling the firmware image
+export PATH:=$(CWD)/manifesto:$(PATH)
+export OOT_BOARD
+export OOT_MANIFEST
 
-init:
+# building rules
+all: copy_bin
+
+copy_bin: build_bin
+	mkdir -p $(OUTPUT)
+	cp $(IMAGEDIR)/nuttx $(OUTPUT)/nuttx.elf
+	cp $(IMAGEDIR)/nuttx.bin $(IMAGEDIR)/System.map $(OUTPUT)
+
+build_bin: yuck_init
+	$(SCRIPTPATH)/build.sh
+
+# build_ara_image.sh (called in $(SCRIPTPATH)/build.sh) runs a distclean on
+# Nuttx root directory before copying it in an empty $(BUILDNAME) in order to
+# compile it. If Nuttx is clean, performing a distclean on it raises tons of
+# warning and the only way to avoid that is to initialize a context in it
+# (yuck!)
+yuck_init:
+	cp $(SCRIPTPATH)/Make.defs $(TOPDIR)
+	cp $(OOT_CONFIG) $(TOPDIR)/.config
+	$(MAKE) -C $(TOPDIR) context
+
+# configuration rule
+menuconfig:
+	cp $(OOT_CONFIG) $(TOPDIR)/.config
+	$(MAKE) -C $(TOPDIR) menuconfig
+	cp $(TOPDIR)/.config $(OOT_CONFIG)
+
+# trusted firmware generation
+tftf: all
+	./bootrom-tools/create-tftf --elf $(OUTPUT)/nuttx.elf \
+		--out $(OUTPUT)/nuttx.tftf \
+		--unipro-mfg 0x126 --unipro-pid 0x1000 --ara-stage 2 \
+		--start 0x`grep '\bReset_Handler$$' $(OUTPUT)/System.map | cut -d ' ' -f 1`
+
+# init/update git submodules
+submodule:
 	git submodule init
 	git submodule update --remote
 
-nuttx_init:
-	cp scripts/Make.defs $(NUTTX_ROOT)/nuttx/
-	cp .config $(NUTTX_ROOT)/nuttx/.config
-	cd $(NUTTX_ROOT)/nuttx; $(MAKE) OOT_MANIFEST="$(CWD)/$(manifest)" context
-
-tftf: all
-	./bootrom-tools/create-tftf --elf nuttx.elf --unipro-mfg 0x126 \
-	                            --unipro-pid 0x1000 --ara-stage 2 \
-	                            --start 0x`grep '\bReset_Handler$$' System.map | cut -d ' ' -f 1`
-
-update:
-	git submodule update --remote
-
-%_defconfig: configs/%_defconfig
-	echo "Loading $<..."
-	cp $< .config
-
-menuconfig:
-	cp .config $(TOPDIR)/.config
-	cd $(TOPDIR); APPSDIR=$(CONFIG_APPS_DIR) kconfig-mconf ./Kconfig
-	cp $(TOPDIR)/.config .config
-
+# cleaning rules
 clean:
-	rm -f $(obj) $(obj:.o=.d) nuttx.bin nuttx.elf System.map *.tftf *.mnfb
+	rm -f $(OOT_BOARD:.c=.o) $(OOT_MANIFEST:.mnfs=.mnfb)
+	rm -rf $(OUTPUT)
 
 distclean: clean
-	cd $(NUTTX_ROOT)/nuttx; $(MAKE) apps_distclean && $(MAKE) distclean
-	rm -f .config
+	$(MAKE) -C $(TOPDIR) apps_distclean
+	$(MAKE) -C $(TOPDIR) distclean
 
-%.o: %.c
-	echo "CC\t $@"
-	$(CC) -MD -MP $(CFLAGS) -c $< -o $@
-	$(call depend)
-
--include $(obj:.o=.d)
-
-.PHONY: all clean distclean init
+.PHONY: all clean distclean submodule
 ifndef VERBOSE
 .SILENT:
 endif

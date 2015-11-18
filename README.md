@@ -1,84 +1,83 @@
 # Getting Started
 
-1. Clone ARA Module FDK
+1. Clone the ARA Module FDK
 
-    >$ git clone https://github.com/Fabo/ara-module-fdk.git
+    >$ git clone https://github.com/projectara/ara-module-fdk.git
 
-2. Go into the repository
+2. Go into the directory
 
     >$ cd ./ara-module-fdk
 
-3. Load the configuration you want (e.g. skeleton_defconfig)
+3. Initialize the submodules
 
-    >$ make skeleton_defconfig
+    >$ make submodule
 
-4. Initialize the module repository
+    This command will download the submodules Bootrom-tools, Manifesto and
+    NuttX. *Note that this command should be run whenever the submodules need to
+    be updated.*
 
-    >$ make init
-
-    This command will download nuttx and manifesto, then initialize nuttx. This
-    command should be run once before using the repository for the first time,
-    or after running the "make distclean" command.
-
-5. Build the module FW image
+4. Build the default skeleton module
 
     >$ make
 
-    Once built, you will find the following files in the root of the repository:
+    Once built, you will find the following files in the newly generated
+    `output-skeleton` directory:
 
-        1. nuttx.elf -> Firmware ELF image \
-        2. nuttx.bin -> Firmware BIN image (raw binary) \
-        3. System.map -> Map linking each function of the firmware to itsaddress.
+    * `nuttx.elf`: Firmware ELF image
+    * `nuttx.bin`: Firmware BIN image (raw binary) extended to 2M
+    * `System.map`: Map linking each function of the firmware to its address
 
 # Developing a new module
 
-{MODULE_NAME} should be replaced by the name of your module. No space
-    is allowed in the module name.
+`{MODULE_NAME}` should be replaced by the name of your module. *No space is
+allowed in the module name.*
 
-* Rename the skeleton defconfig and board file to fit the purpose of your module.
+1. Copy the skeleton module directory
+    >$ cp -r module-skeleton module-{MODULE_NAME}
 
-    Steps:
-    1. rename configs/skeleton_defconfig to configs/{MODULE_NAME}_defconfig
-    2. rename the board file board-skeleton.c to board-{MODULE_NAME}.c
-    3. update the Makefile to use your renamed board file:
-        >-obj += board-skeleton.o \
-        >+obj += board-{MODULE_NAME}.o
+2. Optionally add new C files for your module support and update the
+   `modules.mk` accordingly
 
-* Adding new C files to your build
+    >board-files += new_c_file.c
 
-    >obj += filename.o
+3. Optionally make changes to the configuration file
 
-    Add this in "Makefile". Note that the extension should be ".o" and not
-    ".c" in the Makefile.
-
-* Update the NuttX and Manifesto repository to get the latest upstream changes
-
-    >$ make update
-
-* Make changes to the configuration
-
-    >$ make menuconfig
+    >$ make MODULE={MODULE_NAME} menuconfig
 
     In order to use make menuconfig, you need to have installed on your system
-    the package Kconfig-frontends.
+    the package Kconfig-frontends (*see next section*).
 
-    To install it, read the section "Installing kconfig-frontends"
+4. Update the Bootrom-tools, Manifesto and NuttX repositories to get the latest
+   upstream changes
 
-* Save a newer configuration file
+    >$ make submodule
 
-    >$ cp .config configs/{MODULE_NAME}_defconfig
+5. Compile
 
-* Clean the repository
+    >$ make MODULE={MODULE_NAME}
 
-    >$ make distclean
+6. The generated files are in `output-{MODULE_NAME}` and can be flashed to the
+   GPBridge
+
+In order to clean the repository, there are two possible commands:
+
+* `make clean`: deletes the generated files of the FDK
+* `make distclean`: also cleans the NuttX repository
+
+Tips: to avoid having to define the variable `MODULE` each time you run the
+Makefile, you can edit the main Makefile and directly update `MODULE` with the
+name of your module.
 
 # Installing kconfig-frontends
 
-Run the following commands to install kconfig-frontends:
+Run the following commands in order to install `kconfig-frontends`:
 
-    1. wget http://ymorin.is-a-geek.org/download/kconfig-frontends/kconfig-frontends-3.12.0.0.tar.bz2
-    2. tar xjvf kconfig-frontends-3.12.0.0.tar.bz2
-    3. cd kconfig-frontends-3.12.0.0
-    4. ./configure
-    5. make
-    6. sudo make install
+```
+wget http://ymorin.is-a-geek.org/download/kconfig-frontends/kconfig-frontends-3.12.0.0.tar.bz2
+tar xjvf kconfig-frontends-3.12.0.0.tar.bz2
+cd kconfig-frontends-3.12.0.0
+./configure
+make
+sudo make install
+```
+
