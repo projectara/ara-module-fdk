@@ -36,5 +36,5 @@ void ara_module_early_init(void)
 
 void ara_module_init(void)
 {
-    lowsyslog("Skeleton Module init\n");
+    lowsyslog("Skeleton Example Module init\n");
 }

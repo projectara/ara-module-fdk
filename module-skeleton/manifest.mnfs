@@ -25,7 +25,7 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ; ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
-; Manifest for all Protocols
+; Manifest for Skeleton Example Module (includes many example protocols)
 ;
 
 [manifest-header]
@@ -38,11 +38,11 @@ product-string-id = 2
 
 ; Interface vendor string (id can't be 0)
 [string-descriptor 1]
-string = Project Ara
+string = Project Ara FDK
 
 ; Interface product string (id can't be 0)
 [string-descriptor 2]
-string = All Modules
+string = Skeleton Example Module
 
 ; Control protocol on CPort 0
 [cport-descriptor 0]
