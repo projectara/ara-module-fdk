@@ -7,3 +7,6 @@
 [submodule "bootrom-tools"]
 	path = bootrom-tools
 	url = https://github.com/projectara/bootrom-tools.git
+[submodule "bootrom"]
+	path = bootrom
+	url = https://github.com/projectara/bootrom.git
