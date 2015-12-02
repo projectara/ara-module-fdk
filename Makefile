@@ -90,11 +90,24 @@ menuconfig:
 	$(MAKE) -C $(TOPDIR) menuconfig
 	cp $(TOPDIR)/.config $(OOT_CONFIG)
 
+### ===
+# es2 bootloader image
+# FIXME: this only needed for ES2 chip and should be removed when ES3 is out
+es2boot:
+	cd bootrom && ./configure es2tsb $(vendor_id) $(product_id)
+	$(MAKE) -C bootrom OUTROOT=$(OUTPUT)
+	cp bootrom/$(OUTPUT)/bootrom.bin $(OUTPUT)
+	truncate -s 2M $(OUTPUT)/bootrom.bin
+
+es2boot_clean:
+	make -C bootrom clean OUTROOT=$(OUTPUT)
+### ===
+
 # trusted firmware generation
 tftf: all
-	./bootrom-tools/create-tftf --elf $(OUTPUT)/nuttx.elf \
-		--out $(OUTPUT)/nuttx.tftf \
+	./bootrom-tools/create-tftf --elf $(OUTPUT)/nuttx.elf --outdir $(OUTPUT) \
 		--unipro-mfg 0x126 --unipro-pid 0x1000 --ara-stage 2 \
+		--ara-vid $(vendor_id) --ara-pid $(product_id) \
 		--start 0x`grep '\bReset_Handler$$' $(OUTPUT)/System.map | cut -d ' ' -f 1`
 
 # init/update git submodules
@@ -103,7 +116,7 @@ submodule:
 	git submodule update --remote
 
 # cleaning rules
-clean:
+clean: es2boot_clean
 	rm -f $(OOT_BOARD:.c=.o) $(OOT_MANIFEST:.mnfs=.mnfb)
 	rm -rf $(OUTPUT)
 
