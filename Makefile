@@ -66,10 +66,12 @@ export OOT_MANIFEST
 # building rules
 all: copy_bin
 
-copy_bin: build_bin
-	mkdir -p $(OUTPUT)
+copy_bin: mkoutput build_bin
 	cp $(IMAGEDIR)/nuttx $(OUTPUT)/nuttx.elf
 	cp $(IMAGEDIR)/nuttx.bin $(IMAGEDIR)/System.map $(OUTPUT)
+
+mkoutput:
+	mkdir -p $(OUTPUT)
 
 build_bin: yuck_init
 	$(SCRIPTPATH)/build.sh
@@ -93,7 +95,7 @@ menuconfig:
 ### ===
 # es2 bootloader image
 # FIXME: this only needed for ES2 chip and should be removed when ES3 is out
-es2boot:
+es2boot: mkoutput
 	cd bootrom && ./configure es2tsb $(vendor_id) $(product_id)
 	$(MAKE) -C bootrom OUTROOT=$(OUTPUT)
 	cp bootrom/$(OUTPUT)/bootrom.bin $(OUTPUT)
