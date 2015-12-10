@@ -23,7 +23,7 @@
     >$ make
 
     Once built, you will find the following files in the newly generated
-    `output-skeleton` directory:
+    `build/module-skeleton/image` directory:
 
     * `nuttx.elf`: Firmware ELF image
     * `nuttx.bin`: Firmware BIN image (raw binary) extended to 2M
@@ -53,13 +53,14 @@ allowed in the module name.*
 
     >$ make MODULE={MODULE_NAME}
 
-5. The generated files are in `output-{MODULE_NAME}` and can be flashed to the
-   GPBridge
+5. The generated files are in `build/{MODULE_NAME}/image` and can be flashed to
+   the GPBridge
 
 In order to clean the repository, there are two possible commands:
 
-* `make clean`: deletes the generated files of the FDK
-* `make distclean`: also cleans the NuttX repository
+* `make clean`: deletes `build/{MODULE_NAME}`
+* `make distclean`: deletes the whole `build` directory and also cleans the
+  NuttX repository
 
 Tips: to avoid having to define the variable `MODULE` each time you run the
 Makefile, you can edit the main Makefile and directly update `MODULE` with the
@@ -75,19 +76,19 @@ name of your module.
 
     >$ make MODULE={MODULE_NAME} es2boot
 
-3. Flash the resulting image located at `output-{MODULE_NAME}/bootrom.bin` on
-   the module using the Dediprog SF-100.
+3. Flash the resulting image located at `build/{MODULE_NAME}/image/bootrom.bin`
+   on the module using the Dediprog SF-100.
 
-    >$ flashrom --programmer dediprog -w output-{MODULE_NAME}/bootrom.bin
+    >$ flashrom --programmer dediprog -w build/{MODULE_NAME}/image/bootrom.bin
 
 4. Build the TFTF firmware image:
 
     >$ make MODULE={MODULE_NAME} tftf
 
-5. Copy the resulting image located at `output-{MODULE_NAME}/ara:....:02.tftf`
-   to the Android filesystem:
+5. Copy the resulting image located at
+   `build/{MODULE_NAME}/image/ara:....:02.tftf` to the Android filesystem:
 
-    >$ adb push output-{MODULE_NAME}/*.tftf /data/firmware
+    >$ adb push build/{MODULE_NAME}/image/*.tftf /data/firmware
 
 You might have to create `/data/firmware` before on the Android filesystem:
 
@@ -111,4 +112,3 @@ cd kconfig-frontends-3.12.0.0
 make
 sudo make install
 ```
-
