@@ -103,9 +103,6 @@ struct button_info {
     /** Handler for debounce count thread */
     pthread_t pthread_handler;
 
-    /** Button of signal change flag */
-    uint8_t signal_phase_change;
-
     /** inform the thread should be terminated */
     uint8_t thread_stop;
 };
@@ -338,8 +335,7 @@ static int btn_software_debounce(struct device *dev,
     if (btn_info->last_keystate != value) {
         btn_info->last_keystate = value;
 
-        /* Enable counting thread and marked new time stamp for phase changed*/
-        btn_info->signal_phase_change = 1;
+        /* Enable counting thread */
         btn_info->last_activetime = clock_systimer();
         sem_post(&btn_info->active_debounce);
     }
@@ -718,13 +714,6 @@ static void btn_debounce_check_loop(struct device *dev,
     uint32_t elapsed = 0, cur_time = 0;
     uint8_t value = 0;
 
-    if (btn_info->signal_phase_change) {
-        /* clear timer count and restart count */
-        btn_info->signal_phase_change = 0;
-        cur_time = 0;
-        elapsed = 0;
-    }
-
     for (;;) {
         /* verify key status is still same during counting */
         value = gpio_get_value(btn_info->gpio);
@@ -1026,6 +1015,7 @@ err_close:
 static int hid_button_probe(struct device *dev)
 {
     struct hid_buttons_info *info = NULL;
+    int ret = 0;
 
     if (!dev) {
         return -EINVAL;
@@ -1034,6 +1024,11 @@ static int hid_button_probe(struct device *dev)
     info = zalloc(sizeof(*info));
     if (!info) {
         return -ENOMEM;
+    }
+
+    ret = tsb_request_pinshare(TSB_PIN_GPIO9 | TSB_PIN_UART_CTSRTS);
+    if (ret) {
+        goto err_probe;
     }
 
     /** Temporary to use GPIO 0/9 as button up/down key for testing */
@@ -1056,6 +1051,10 @@ static int hid_button_probe(struct device *dev)
     sem_init(&info->lock, 0, 1);
 
     return 0;
+
+err_probe:
+    free(info);
+    return ret;
 }
 
 /**
@@ -1083,6 +1082,8 @@ static void hid_button_remove(struct device *dev)
     if (info->state & HID_DEVICE_FLAG_OPEN) {
         hid_button_close(dev);
     }
+
+    tsb_release_pinshare(TSB_PIN_GPIO9 | TSB_PIN_UART_CTSRTS);
 
     info->hdesc = NULL;
     info->rdesc = NULL;
