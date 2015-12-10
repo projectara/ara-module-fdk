@@ -29,15 +29,15 @@
 
 CWD := $(shell pwd)
 
-# the module directory can be easily overriden
+# make the module directory be easily overriden
 MODULE ?= module-skeleton
 MODULE_PATH := $(CWD)/$(MODULE)
 include $(MODULE_PATH)/module.mk
 
-BUILDNAME := oot-$(MODULE)
+OUTPUT := output-$(MODULE)
 
-# where to copy the binaries
-OUTPUT ?= output-$(MODULE)
+# prepare NuttX
+BUILDNAME := oot-$(MODULE)
 
 SCRIPTPATH := $(CWD)/scripts
 
