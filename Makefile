@@ -64,7 +64,15 @@ export OOT_BOARD
 export OOT_MANIFEST
 
 # building rules
-all: copy_bin
+all: tftf
+
+# trusted firmware generation
+tftf: copy_bin
+	./bootrom-tools/create-tftf \
+		--elf $(OUTPUT)/nuttx.elf --outdir $(OUTPUT) \
+		--unipro-mfg 0x126 --unipro-pid 0x1000 --ara-stage 2 \
+		--ara-vid $(vendor_id) --ara-pid $(product_id) \
+		--start 0x`grep '\bReset_Handler$$' $(OUTPUT)/System.map | cut -d ' ' -f 1`
 
 copy_bin: mkoutput build_bin
 	cp $(IMAGEDIR)/nuttx $(OUTPUT)/nuttx.elf
@@ -105,12 +113,6 @@ es2boot_clean:
 	make -C bootrom clean OUTROOT=$(OUTPUT)
 ### ===
 
-# trusted firmware generation
-tftf: all
-	./bootrom-tools/create-tftf --elf $(OUTPUT)/nuttx.elf --outdir $(OUTPUT) \
-		--unipro-mfg 0x126 --unipro-pid 0x1000 --ara-stage 2 \
-		--ara-vid $(vendor_id) --ara-pid $(product_id) \
-		--start 0x`grep '\bReset_Handler$$' $(OUTPUT)/System.map | cut -d ' ' -f 1`
 
 # init/update git submodules
 submodule:
