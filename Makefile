@@ -37,13 +37,14 @@ include $(MODULE_PATH)/module.mk
 OUTPUT := output-$(MODULE)
 
 # prepare NuttX
-BUILDNAME := oot-$(MODULE)
+BUILDNAME := $(MODULE)
 
 SCRIPTPATH := $(CWD)/scripts
 
 NUTTX_ROOT ?= $(CWD)/nuttx
 TOPDIR := $(NUTTX_ROOT)/nuttx
-IMAGEDIR := $(NUTTX_ROOT)/$(BUILDNAME)/image
+BUILDBASE := $(NUTTX_ROOT)/oot
+IMAGEDIR := $(BUILDBASE)/$(BUILDNAME)/image
 
 prepend-dir-to = $(addprefix $2/,$1)
 prepend-dir = $(foreach d,$($1),$(call prepend-dir-to,$(d),$2))
@@ -54,6 +55,7 @@ OOT_MANIFEST := $(call prepend-dir,manifest,$(MODULE_PATH))
 
 # variables needed for $(SCRIPTPATH)/build.sh
 export BUILDNAME
+export BUILDBASE
 export OOT_CONFIG
 export NUTTX_ROOT
 export SCRIPTPATH

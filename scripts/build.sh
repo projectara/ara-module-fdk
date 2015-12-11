@@ -30,10 +30,10 @@
 
 buildname=$BUILDNAME
 defconfigFile=$OOT_CONFIG
-buildbase=$NUTTX_ROOT
+buildbase=$BUILDBASE
 configpath=$SCRIPTPATH
 
-cd $buildbase
+cd $NUTTX_ROOT
 source build_ara_image.sh
 build_image_from_defconfig
 copy_image_files
