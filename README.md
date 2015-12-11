@@ -12,9 +12,11 @@
 
     >$ make submodule
 
-    This command will download the submodules Bootrom-tools, Manifesto and
-    NuttX. *Note that this command should be run whenever the submodules need to
-    be updated.*
+    This command will download the submodules
+    [bootrom](https://github.com/projectara/bootrom),
+    [bootrom-tools](https://github.com/projectara/bootrom-tools),
+    [manifest](https://github.com/projectara/manifesto) and
+    [nuttx](https://github.com/projectara/nuttx).
 
 4. Build the default skeleton module
 
@@ -47,16 +49,11 @@ allowed in the module name.*
     In order to use make menuconfig, you need to have installed on your system
     the package Kconfig-frontends (*see next section*).
 
-4. Update the Bootrom-tools, Manifesto and NuttX repositories to get the latest
-   upstream changes
-
-    >$ make submodule
-
-5. Compile
+4. Compile
 
     >$ make MODULE={MODULE_NAME}
 
-6. The generated files are in `output-{MODULE_NAME}` and can be flashed to the
+5. The generated files are in `output-{MODULE_NAME}` and can be flashed to the
    GPBridge
 
 In order to clean the repository, there are two possible commands:

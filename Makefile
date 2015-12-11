@@ -29,19 +29,29 @@
 
 CWD := $(shell pwd)
 
-# make the module directory be easily overriden
+# make the module directory easily overriden
 MODULE ?= module-skeleton
 MODULE_PATH := $(CWD)/$(MODULE)
 include $(MODULE_PATH)/module.mk
 
 OUTPUT := output-$(MODULE)
 
+# make externals easily overriden
+TOOLS_NAME = tools
+TOOLS_ROOT = $(CWD)/$(TOOLS_NAME)
+BOOTROM_TOOLS_ROOT ?= $(TOOLS_ROOT)/bootrom-tools
+MANIFESTO_ROOT ?= $(TOOLS_ROOT)/manifesto
+
+FW_NAME = firmware
+FW_ROOT = $(CWD)/$(FW_NAME)
+BOOTROM_ROOT ?= $(FW_ROOT)/bootrom
+NUTTX_ROOT ?= $(FW_ROOT)/nuttx
+
 # prepare NuttX
 BUILDNAME := $(MODULE)
 
 SCRIPTPATH := $(CWD)/scripts
 
-NUTTX_ROOT ?= $(CWD)/nuttx
 TOPDIR := $(NUTTX_ROOT)/nuttx
 BUILDBASE := $(NUTTX_ROOT)/oot
 IMAGEDIR := $(BUILDBASE)/$(BUILDNAME)/image
@@ -61,7 +71,7 @@ export NUTTX_ROOT
 export SCRIPTPATH
 
 # variables needed when compiling the firmware image
-export PATH:=$(CWD)/manifesto:$(PATH)
+export PATH:=$(MANIFESTO_ROOT):$(PATH)
 export OOT_BOARD
 export OOT_MANIFEST
 
@@ -70,7 +80,7 @@ all: tftf
 
 # trusted firmware generation
 tftf: copy_bin
-	./bootrom-tools/create-tftf \
+	$(BOOTROM_TOOLS_ROOT)/create-tftf \
 		--elf $(OUTPUT)/nuttx.elf --outdir $(OUTPUT) \
 		--unipro-mfg 0x126 --unipro-pid 0x1000 --ara-stage 2 \
 		--ara-vid $(vendor_id) --ara-pid $(product_id) \
@@ -106,20 +116,20 @@ menuconfig:
 # es2 bootloader image
 # FIXME: this only needed for ES2 chip and should be removed when ES3 is out
 es2boot: mkoutput
-	cd bootrom && ./configure es2tsb $(vendor_id) $(product_id)
-	$(MAKE) -C bootrom OUTROOT=$(OUTPUT)
-	cp bootrom/$(OUTPUT)/bootrom.bin $(OUTPUT)
+	cd $(BOOTROM_ROOT) && ./configure es2tsb $(vendor_id) $(product_id)
+	$(MAKE) -C $(BOOTROM_ROOT) OUTROOT=$(OUTPUT)
+	cp $(BOOTROM_ROOT)/$(OUTPUT)/bootrom.bin $(OUTPUT)
 	truncate -s 2M $(OUTPUT)/bootrom.bin
 
 es2boot_clean:
-	make -C bootrom clean OUTROOT=$(OUTPUT)
+	make -C $(BOOTROM_ROOT) clean OUTROOT=$(OUTPUT)
 ### ===
 
 
-# init/update git submodules
+# init git submodules
 submodule:
 	git submodule init
-	git submodule update --remote
+	git submodule update
 
 # cleaning rules
 clean: es2boot_clean
