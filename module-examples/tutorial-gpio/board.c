@@ -25,11 +25,12 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Author: Fabien Parent <fparent@baylibre.com>
  * Author: Joel Porquet <joel@porquet.org>
  */
 
 #include <syslog.h>
+
+#include <tsb_scm.h>
 
 void ara_module_early_init(void)
 {
@@ -37,5 +38,21 @@ void ara_module_early_init(void)
 
 void ara_module_init(void)
 {
-    lowsyslog("GPIO Example Module init\n");
+    lowsyslog("GPIO Tutorial Module init\n");
+
+    /*
+     * Configure shared I2S_MCLK/DBG_TRCLK/GPIO18 pin as a GPIO pin:
+     *  => PinShare[PIN_ETM] = 0 and PinShare[PIN_GPIO18] = 1
+     *      (PIN_ETM = 4, PIN_GPIO18 = 11) */
+
+    /* take ownership of the pinsharing bits (PIN_ETM and PIN_GPIO18) */
+    if (tsb_request_pinshare(TSB_PIN_ETM | TSB_PIN_GPIO18)) {
+        lowsyslog("Cannot get ownership for GPIO18 pin\n");
+        return;
+    }
+
+    /* set the pinsharing bits for configuring GPIO18 */
+    tsb_clr_pinshare(TSB_PIN_ETM);
+    tsb_set_pinshare(TSB_PIN_GPIO18);
 }
+

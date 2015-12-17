@@ -25,7 +25,7 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ; ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
-; Manifest for GPIO Example Module
+; Manifest for GPIO Tutorial Module
 ;
 
 [manifest-header]
@@ -42,7 +42,7 @@ string = Project Ara FDK
 
 ; Interface product string (id can't be 0)
 [string-descriptor 2]
-string = GPIO Example Module
+string = GPIO Tutorial Module
 
 ; Control protocol on CPort 0
 [cport-descriptor 0]
