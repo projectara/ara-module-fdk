@@ -88,18 +88,18 @@ tftf: copy_bin
 		--ara-vid $(vendor_id) --ara-pid $(product_id) \
 		--start 0x`grep '\bReset_Handler$$' $(OUTPUTIMAGE)/System.map | cut -d ' ' -f 1`
 
-copy_bin: mkoutput build_bin
+copy_bin: mkoutput cp_source build_bin
 	cp $(IMAGEDIR)/nuttx $(OUTPUTIMAGE)/nuttx.elf
 	cp $(IMAGEDIR)/nuttx.bin $(IMAGEDIR)/System.map $(OUTPUTIMAGE)
 
 mkoutput:
 	mkdir -p $(OUTPUTIMAGE)
 
-build_bin: yuck_init $(OOT_BOARD) $(OOT_MANIFEST)
-	$(SCRIPTPATH)/build.sh
+cp_source:
+	cp -r $(MODULE_PATH)/* $(OUTPUTBASE)
 
-$(OUTPUTBASE)/%: $(MODULE_PATH)/%
-	cp $< $@
+build_bin: yuck_init
+	$(SCRIPTPATH)/build.sh
 
 # build_ara_image.sh (called in $(SCRIPTPATH)/build.sh) runs a distclean on
 # Nuttx root directory before copying it in an empty $(BUILDNAME) in order to
