@@ -111,10 +111,15 @@ yuck_init:
 	cp $(OOT_CONFIG) $(TOPDIR)/.config
 	$(MAKE) -C $(TOPDIR) context
 
-# configuration rule
+# configuration rules
 menuconfig:
 	cp $(OOT_CONFIG) $(TOPDIR)/.config
 	$(MAKE) -C $(TOPDIR) menuconfig
+	cp $(TOPDIR)/.config $(OOT_CONFIG)
+
+updateconfig:
+	cp $(OOT_CONFIG) $(TOPDIR)/.config
+	$(MAKE) -C $(TOPDIR) olddefconfig > /dev/null 2>&1
 	cp $(TOPDIR)/.config $(OOT_CONFIG)
 
 ### ===
