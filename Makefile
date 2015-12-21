@@ -30,7 +30,7 @@
 CWD := $(shell pwd)
 
 # make the module directory easily overriden
-MODULE ?= module-skeleton
+MODULE ?= module-examples/skeleton
 MODULE_PATH := $(CWD)/$(MODULE)
 include $(MODULE_PATH)/module.mk
 
