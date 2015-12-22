@@ -23,8 +23,9 @@
     >$ make
 
     Once built, you will find the following files in the newly generated
-    `build/module-skeleton/image` directory:
+    `build/module-examples/skeleton/image` directory:
 
+    * `ara:00000126:00001000:00000000:00000000:02.tftf`: a signed TFTF image
     * `nuttx.elf`: Firmware ELF image
     * `nuttx.bin`: Firmware BIN image (raw binary) extended to 2M
     * `System.map`: Map linking each function of the firmware to its address
@@ -35,7 +36,7 @@
 allowed in the module name.*
 
 1. Copy the skeleton module directory
-    >$ cp -r module-skeleton module-{MODULE_NAME}
+    >$ cp -r module-examples/skeleton {MODULE_NAME}
 
 2. Optionally add new C files for your module support and update the
    `modules.mk` accordingly
@@ -59,8 +60,7 @@ allowed in the module name.*
 In order to clean the repository, there are two possible commands:
 
 * `make clean`: deletes `build/{MODULE_NAME}`
-* `make distclean`: deletes the whole `build` directory and also cleans the
-  NuttX repository
+* `make distclean`: deletes the whole `build` directory
 
 Tips: to avoid having to define the variable `MODULE` each time you run the
 Makefile, you can edit the main Makefile and directly update `MODULE` with the
