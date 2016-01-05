@@ -962,7 +962,7 @@ static int ov5645_write_array(struct i2c_dev_s *dev,
 
 static int ov5645_set_stream(struct sensor_info *info, bool on)
 {
-    return ov5645_write(info->cam_i2c, REG_STREAM_ONOFF, on ? 0x00 : 0xff);
+    return ov5645_write(info->cam_i2c, REG_STREAM_ONOFF, on ? 0x00 : 0x0f);
 }
 
 /**
