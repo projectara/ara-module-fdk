@@ -39,8 +39,6 @@
 #include <nuttx/gpio.h>
 #include <nuttx/clock.h>
 
-#include <tsb_scm.h>
-
 #define HID_DEVICE_FLAG_PROBE   BIT(0)
 #define HID_DEVICE_FLAG_OPEN    BIT(1)
 #define HID_DEVICE_FLAG_POWERON BIT(2)
@@ -1015,7 +1013,6 @@ err_close:
 static int hid_button_probe(struct device *dev)
 {
     struct hid_buttons_info *info = NULL;
-    int ret = 0;
 
     if (!dev) {
         return -EINVAL;
@@ -1025,15 +1022,6 @@ static int hid_button_probe(struct device *dev)
     if (!info) {
         return -ENOMEM;
     }
-
-    ret = tsb_request_pinshare(TSB_PIN_GPIO9 | TSB_PIN_UART_CTSRTS);
-    if (ret) {
-        goto err_probe;
-    }
-
-    /** Temporary to use GPIO 0/9 as button up/down key for testing */
-    tsb_set_pinshare(TSB_PIN_GPIO9);
-    tsb_clr_pinshare(TSB_PIN_UART_CTSRTS);
 
     hid_dev = dev;
     info->dev = dev;
@@ -1051,10 +1039,6 @@ static int hid_button_probe(struct device *dev)
     sem_init(&info->lock, 0, 1);
 
     return 0;
-
-err_probe:
-    free(info);
-    return ret;
 }
 
 /**
@@ -1082,8 +1066,6 @@ static void hid_button_remove(struct device *dev)
     if (info->state & HID_DEVICE_FLAG_OPEN) {
         hid_button_close(dev);
     }
-
-    tsb_release_pinshare(TSB_PIN_GPIO9 | TSB_PIN_UART_CTSRTS);
 
     info->hdesc = NULL;
     info->rdesc = NULL;
