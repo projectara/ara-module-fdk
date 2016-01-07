@@ -1,7 +1,7 @@
 config		= config
 manifest	= manifest.mnfs
 board-files	= board.c
-board-files	+= hid_button.c
+board-files	+= eink.c
 
-vendor_id      = 0x00000000
-product_id     = 0x00000000
+vendor_id      = 0x18D1
+product_id     = 0x1234

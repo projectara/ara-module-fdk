@@ -39,21 +39,21 @@
 static struct device devices[] = {
     {
         .type           = DEVICE_TYPE_HID_HW,
-        .name           = "hid_Button",
-        .desc           = "Button HID Driver",
+        .name           = HID_DEVICE_NAME,
+        .desc           = HID_DRIVER_DESCRIPTION,
         .id             = 0,
     },
 };
 
-static struct device_table bdb_device_table = {
+static struct device_table module_device_table = {
     .device = devices,
     .device_count = ARRAY_SIZE(devices),
 };
 
-static void bdb_driver_register(void)
+static void module_driver_register(void)
 {
-    extern struct device_driver hid_button_driver;
-    device_register_driver(&hid_button_driver);
+    extern struct device_driver hid_dev_driver;
+    device_register_driver(&hid_dev_driver);
 };
 
 void ara_module_early_init(void)
@@ -64,6 +64,6 @@ void ara_module_init(void)
 {
     lowsyslog("e-Ink-Display Module init\n");
 
-    device_table_register(&bdb_device_table);
-    bdb_driver_register();
+    device_table_register(&module_device_table);
+    module_driver_register();
 }
