@@ -207,6 +207,7 @@ static const struct reg_val_tbl ov5645_init_setting[] = {
     {0x460b, 0x37},
     {0x460c, 0x20},
     /* MIPI timing */
+    {0x4800, 0x24}, /* non-continuous clock lane, LP-11 when idle */
     {0x4818, 0x01},
     {0x481d, 0xf0},
     {0x481f, 0x50},
