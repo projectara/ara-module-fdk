@@ -1117,6 +1117,15 @@ static int camera_op_set_streams_cfg(struct device *dev, uint8_t *num_streams,
         return -EINVAL;
 
     /*
+     * When unconfiguring the module just uninit CSI-RX, the sensor is already
+     * stopped.
+     */
+    if (*num_streams == 0) {
+        csi_rx_uninit(info->cdsidev);
+        return 0;
+    }
+
+    /*
      * If more than one stream has been requested, set the
      * format configuration state flag anyway, because this
      * module supports just one stream
@@ -1169,6 +1178,9 @@ static int camera_op_set_streams_cfg(struct device *dev, uint8_t *num_streams,
         printf("ov5645: failed to set mode\n", __func__);
         return -EIO;
     }
+
+    /* Initialize the CSI receiver. */
+    csi_rx_init(info->cdsidev, NULL);
 
     info->current_mode = i;
 
@@ -1225,12 +1237,16 @@ static int camera_op_flush(struct device *dev, uint32_t *request_id)
         return -EPERM;
     }
 
-    /* Stop stream */
+    /*
+     * Stop the sensor first as the CSI receiver requires the D-PHY lines to be
+     * in the LP-11 state to stop.
+     */
     ret = ov5645_set_stream(info, false);
     if (ret) {
          return -EIO;
     }
 
+    /* Now stop the CSI receiver. */
     ret = csi_rx_stop(info->cdsidev);
     if (ret) {
         return ret;
@@ -1306,14 +1322,12 @@ static int camera_dev_open(struct device *dev)
         goto error;
     }
 
-    /* Open and configure the CSI receiver. */
+    /* Open the CSI receiver. */
     info->cdsidev = csi_rx_open(0);
     if (info->cdsidev == NULL) {
         ret = -EINVAL;
         goto error;
     }
-
-    csi_rx_configure(info->cdsidev, NULL);
 
     info->state = OV5645_STATE_OPEN;
 
