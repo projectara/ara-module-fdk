@@ -38,16 +38,15 @@ ARA_MAKE_PARALLEL=1            # controls make's -j flag
 ARA_MAKE_ALWAYS=""             # controls make's -B (--always-make) flag
 
 build_image_from_defconfig() {
-  # configpath, defconfigFile, buildname, buildbase
+  # configpath, defconfigFile, buildbase
   # must be defined on entry
 
   echo "Build config file   : $defconfigFile"
-  echo "Build name          : '$buildname'"
 
   # define paths used during build process
-  ARA_BUILD_CONFIG_PATH="$buildbase/$buildname/config"
-  ARA_BUILD_IMAGE_PATH="$buildbase/$buildname/image"
-  ARA_BUILD_TOPDIR="$buildbase/$buildname"
+  ARA_BUILD_CONFIG_PATH="$buildbase/config"
+  ARA_BUILD_IMAGE_PATH="$buildbase/image"
+  ARA_BUILD_TOPDIR="$buildbase"
 
   echo "Build output folder : $ARA_BUILD_TOPDIR"
   echo "Image output folder : $ARA_BUILD_IMAGE_PATH"
@@ -92,8 +91,7 @@ build_image_from_defconfig() {
   cp ${ARA_BUILD_TOPDIR}/nuttx/Make.defs ${ARA_BUILD_CONFIG_PATH}/Make.defs > /dev/null 2>&1
   cp ${ARA_BUILD_TOPDIR}/nuttx/setenv.sh  ${ARA_BUILD_CONFIG_PATH}/setenv.sh > /dev/null 2>&1
 
-  echo -n "Building '$buildname'" ...
-  export ARA_BUILD_NAME=$buildname
+  # make firmware
   make  -j ${ARA_MAKE_PARALLEL} ${ARA_MAKE_ALWAYS} -r -f Makefile.unix  2>&1 | tee $ARA_BUILD_TOPDIR/build.log
 
   MAKE_RESULT=${PIPESTATUS[0]}
@@ -108,18 +106,14 @@ copy_image_files() {
     cp $ARA_BUILD_TOPDIR/nuttx/$fn $ARA_BUILD_TOPDIR/image/$fn  >/dev/null 2>&1
     rm -f $ARA_BUILD_TOPDIR/nuttx/$fn >/dev/null 2>&1
   done
-  # if bridge image (i.e. *not* an svc image)
+
   # expand image to 2M using truncate utility
-  # for more info, run "truncate --help"
-  if [ -z $(echo $buildname | grep "svc")  ] ; then
     truncate -s 2M $ARA_BUILD_TOPDIR/image/nuttx.bin
-  fi
 }
 
 main() {
-  buildname=$BUILDNAME
   defconfigFile=$OOT_CONFIG
-  buildbase=$BUILDBASE
+  buildbase=$NUTTX_BUILDBASE
   configpath=$SCRIPTPATH
 
   cd $NUTTX_ROOT

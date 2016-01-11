@@ -34,10 +34,6 @@ MODULE ?= module-examples/skeleton
 MODULE_PATH := $(CWD)/$(MODULE)
 include $(MODULE_PATH)/module.mk
 
-OUTPUTDIR := $(CWD)/build
-OUTPUTBASE := $(OUTPUTDIR)/$(MODULE)
-OUTPUTIMAGE := $(OUTPUTBASE)/image
-
 # make externals easily overriden
 TOOLS_NAME = tools
 TOOLS_ROOT = $(CWD)/$(TOOLS_NAME)
@@ -50,24 +46,24 @@ BOOTROM_ROOT ?= $(FW_ROOT)/bootrom
 NUTTX_ROOT ?= $(FW_ROOT)/nuttx
 
 # prepare NuttX
-BUILDNAME := $(MODULE)
-
 SCRIPTPATH := $(CWD)/scripts
 
 TOPDIR := $(NUTTX_ROOT)/nuttx
-BUILDBASE := $(NUTTX_ROOT)/oot
-IMAGEDIR := $(BUILDBASE)/$(BUILDNAME)/image
+BUILDDIR := $(CWD)/build
+BUILDBASE := $(BUILDDIR)/$(MODULE)
+NUTTX_BUILDBASE := $(BUILDBASE)/nuttx_build
+BOOTROM_BUILDBASE := $(BUILDBASE)/bootrom
+TFTFDIR := $(BUILDBASE)/tftf
 
 prepend-dir-to = $(addprefix $2/,$1)
 prepend-dir = $(foreach d,$($1),$(call prepend-dir-to,$(d),$2))
 
 OOT_CONFIG := $(call prepend-dir,config,$(MODULE_PATH))
-OOT_BOARD := $(call prepend-dir,board-files,$(OUTPUTBASE))
-OOT_MANIFEST := $(call prepend-dir,manifest,$(OUTPUTBASE))
+OOT_BOARD := $(call prepend-dir,board-files,$(BUILDBASE))
+OOT_MANIFEST := $(call prepend-dir,manifest,$(BUILDBASE))
 
 # variables needed for $(SCRIPTPATH)/build.sh
-export BUILDNAME
-export BUILDBASE
+export NUTTX_BUILDBASE
 export OOT_CONFIG
 export NUTTX_ROOT
 export SCRIPTPATH
@@ -82,21 +78,28 @@ all: tftf
 
 # trusted firmware generation
 tftf: copy_bin
+	mv $(NUTTX_BUILDBASE)/image/nuttx \
+		$(NUTTX_BUILDBASE)/image/nuttx.elf
 	$(BOOTROM_TOOLS_ROOT)/create-tftf \
-		--elf $(OUTPUTIMAGE)/nuttx.elf --outdir $(OUTPUTIMAGE) \
-		--unipro-mfg 0x126 --unipro-pid 0x1000 --ara-stage 2 \
-		--ara-vid $(vendor_id) --ara-pid $(product_id) --no-hamming-balance \
-		--start 0x`grep '\bReset_Handler$$' $(OUTPUTIMAGE)/System.map | cut -d ' ' -f 1`
+		--elf $(NUTTX_BUILDBASE)/image/nuttx.elf \
+		--outdir $(TFTFDIR) \
+		--unipro-mfg 0x126 \
+		--unipro-pid 0x1000 \
+		--ara-stage 2 \
+		--ara-vid $(vendor_id) \
+		--ara-pid $(product_id) \
+		--no-hamming-balance \
+		--start 0x`grep '\bReset_Handler$$' $(NUTTX_BUILDBASE)/image/System.map | cut -d ' ' -f 1`
 
 copy_bin: mkoutput cp_source build_bin
-	cp $(IMAGEDIR)/nuttx $(OUTPUTIMAGE)/nuttx.elf
-	cp $(IMAGEDIR)/nuttx.bin $(IMAGEDIR)/System.map $(OUTPUTIMAGE)
+	# no longer neccessary
 
 mkoutput:
-	mkdir -p $(OUTPUTIMAGE)
+	mkdir -p $(TFTFDIR)
+	mkdir -p $(BOOTROM_BUILDBASE)
 
 cp_source:
-	cp -r $(MODULE_PATH)/* $(OUTPUTBASE)
+	cp -r $(MODULE_PATH)/* $(BUILDBASE)
 
 build_bin: yuck_init
 	$(SCRIPTPATH)/build.sh
@@ -128,11 +131,12 @@ updateconfig:
 es2boot: mkoutput
 	cd $(BOOTROM_ROOT) && ./configure es2tsb $(vendor_id) $(product_id)
 	$(MAKE) -C $(BOOTROM_ROOT) OUTROOT=$(MODULE)
-	cp $(BOOTROM_ROOT)/$(MODULE)/bootrom.bin $(OUTPUTIMAGE)
-	truncate -s 2M $(OUTPUTIMAGE)/bootrom.bin
+	cp $(BOOTROM_ROOT)/$(MODULE)/bootrom.bin $(BOOTROM_BUILDBASE)
+	truncate -s 2M $(BOOTROM_BUILDBASE)/bootrom.bin
 
 es2boot_clean:
 	make -C $(BOOTROM_ROOT) clean OUTROOT=$(MODULE)
+	rm -rf $(BOOTROM_BUILDBASE)
 ### ===
 
 
@@ -143,10 +147,10 @@ submodule:
 
 # cleaning rules
 clean:
-	rm -rf $(OUTPUTBASE)
+	rm -rf $(BUILDBASE)
 
 distclean: clean es2boot_clean
-	rm -rf $(OUTPUTDIR)
+	rm -rf $(BUILDDIR)
 	$(MAKE) -C $(TOPDIR) apps_distclean
 	$(MAKE) -C $(TOPDIR) distclean
 
