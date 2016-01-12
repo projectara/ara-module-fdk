@@ -79,7 +79,6 @@ struct sensor_info {
     struct i2c_dev_s *cam_i2c;
     enum ov5645_state state;
     struct cdsi_dev *cdsidev;
-    uint8_t current_mode;
     uint8_t req_id;
 };
 
@@ -967,46 +966,11 @@ static int ov5645_set_stream(struct sensor_info *info, bool on)
 }
 
 /**
- * @brief ov5645 sensor initialization function
- * @param vals Pointer to mode of sensor to initialize
- * @return zero for success or non-zero on any faillure
+ * @brief Power up the sensor
+ * @param info Sensor data instance
  */
-static int ov5645_set_mode(struct sensor_info *info,
-                           const struct reg_val_tbl *vals)
+static void ov5645_power_on(struct sensor_info *info)
 {
-    int ret;
-
-    /* Make sure the stream is stopped. */
-    ret = ov5645_set_stream(info, false);
-    if (ret) {
-        return -EIO;
-    }
-
-    usleep(10);
-
-    /* Apply sensor settings. */
-    ret = ov5645_write_array(info->cam_i2c, vals);
-    if (ret) {
-        return -EIO;
-    }
-
-    return ret;
-}
-
-/**
- * @brief Power up camera module
- * @param dev Pointer to structure of device data
- * @return 0 on success, negative errno on error
- */
-static int camera_op_power_up(struct device *dev)
-{
-    struct sensor_info *info = device_get_private(dev);
-
-    if (info->state == OV5645_STATE_OPEN) {
-        return -EPERM;
-    }
-
-    /* sensor power-on */
     gpio_direction_out(OV5645_GPIO_PWDN, 0); /* shutdown -> L */
     gpio_direction_out(OV5645_GPIO_RESET, 0); /* reset -> L */
     usleep(5000);
@@ -1016,29 +980,49 @@ static int camera_op_power_up(struct device *dev)
 
     gpio_direction_out(OV5645_GPIO_RESET, 1); /* reset -> H */
     usleep(1000);
-
-    return 0;
 }
 
 /**
- * @brief Power down camera module
- * @param dev Pointer to structure of device data
- * @return 0 on success, negative errno on error
+ * @brief Power down the sensor
+ * @param info Sensor data instance
  */
-static int camera_op_power_down(struct device *dev)
+static void ov5645_power_off(struct sensor_info *info)
 {
-    struct sensor_info *info = device_get_private(dev);
-
-    if (info->state != OV5645_STATE_OPEN) {
-        return -EPERM;
-    }
-
-    /* sensor power off */
     gpio_direction_out(OV5645_GPIO_PWDN, 0); /* shutdown -> L */
     usleep(1000);
 
     gpio_direction_out(OV5645_GPIO_RESET, 0); /* reset -> L */
     usleep(1000);
+}
+
+/**
+ * @brief ov5645 sensor configuration function
+ * @param info Sensor data instance
+ * @param mode Mode to be configured
+ * @return zero for success or non-zero on any faillure
+ */
+static int ov5645_configure(struct sensor_info *info,
+                            const struct ov5645_mode_info *mode)
+{
+    int ret;
+
+    /* Perform a software reset. */
+    ov5645_write(info->cam_i2c, 0x3103, 0x11); /* Select PLL input clock */
+    ov5645_write(info->cam_i2c, 0x3008, 0x82); /* Software reset */
+    usleep(5000);
+
+    /* Apply the initial configuration. */
+    ret = ov5645_write_array(info->cam_i2c, ov5645_init_setting);
+    if (ret < 0) {
+        return -EIO;
+    }
+
+    /* Set the mode. */
+    ret = ov5645_write_array(info->cam_i2c, mode->regs);
+    if (ret) {
+        printf("ov5645: failed to set mode\n", __func__);
+        return -EIO;
+    }
 
     return 0;
 }
@@ -1117,11 +1101,12 @@ static int camera_op_set_streams_cfg(struct device *dev, uint8_t *num_streams,
         return -EINVAL;
 
     /*
-     * When unconfiguring the module just uninit CSI-RX, the sensor is already
-     * stopped.
+     * When unconfiguring the module we can uninit CSI-RX right away as the
+     * sensor is already stopped, and then power the sensor off.
      */
     if (*num_streams == 0) {
         csi_rx_uninit(info->cdsidev);
+        ov5645_power_off(info);
         return 0;
     }
 
@@ -1170,19 +1155,17 @@ static int camera_op_set_streams_cfg(struct device *dev, uint8_t *num_streams,
         *res_flags & CAMERA_CONF_STREAMS_ADJUSTED)
         return 0;
 
-    if (info->current_mode == i)
-        return 0;
+    /* Power the sensor up and configure it. */
+    ov5645_power_on(info);
 
-    ret = ov5645_set_mode(info, cfg->regs);
-    if (ret) {
-        printf("ov5645: failed to set mode\n", __func__);
-        return -EIO;
+    ret = ov5645_configure(info, cfg);
+    if (ret < 0) {
+        ov5645_power_off(info);
+        return ret;
     }
 
     /* Initialize the CSI receiver. */
     csi_rx_init(info->cdsidev, NULL);
-
-    info->current_mode = i;
 
     return 0;
 }
@@ -1257,6 +1240,38 @@ static int camera_op_flush(struct device *dev, uint32_t *request_id)
     return ret;
 }
 
+static int camera_sensor_detect(struct sensor_info *info)
+{
+    uint16_t id;
+    int ret;
+
+    /* Power up the sensor and verify the ID register. */
+    ov5645_power_on(info);
+
+    ret = ov5645_read(info->cam_i2c, OV5645_ID_HIGH);
+    if (ret < 0) {
+        goto done;
+    }
+
+    id = ret << 8;
+
+    ret = ov5645_read(info->cam_i2c, OV5645_ID_LOW);
+    if (ret < 0) {
+        goto done;
+    }
+
+    id |= ret;
+
+    if (id != OV5645_ID) {
+        printf("ov5645 ID mismatch (0x%04x\n)", id);
+        ret = -ENODEV;
+    }
+
+done:
+    ov5645_power_off(info);
+    return ret;
+}
+
 /**
  * @brief Open camera device
  * @param dev pointer to structure of device data
@@ -1265,14 +1280,11 @@ static int camera_op_flush(struct device *dev, uint32_t *request_id)
 static int camera_dev_open(struct device *dev)
 {
     struct sensor_info *info = device_get_private(dev);
-    uint16_t id;
     int ret;
 
     if (info->state == OV5645_STATE_OPEN) {
         return -EBUSY;
     }
-
-    info->current_mode = -1;
 
     gpio_activate(OV5645_GPIO_PWDN);
     gpio_activate(OV5645_GPIO_RESET);
@@ -1284,40 +1296,8 @@ static int camera_dev_open(struct device *dev)
         goto error;
     }
 
-    /* Power up the sensor and verify the ID register. */
-    camera_op_power_up(info->dev);
-
-    ret = ov5645_read(info->cam_i2c, OV5645_ID_HIGH);
-    if (ret < 0) {
-        goto error;
-    }
-
-    id = ret << 8;
-
-    ret = ov5645_read(info->cam_i2c, OV5645_ID_LOW);
-    if (ret < 0) {
-        goto error;
-    }
-
-    id |= ret;
-
-    if (id != OV5645_ID) {
-        printf("ov5645 ID mismatch (0x%04x\n)", id);
-        ret = -ENODEV;
-        goto error;
-    }
-
-    /* Reset the sensor and apply the initial configuration. */
-    ret = ov5645_set_stream(info, false);
-    if (ret < 0) {
-        goto error;
-    }
-
-    ov5645_write(info->cam_i2c, 0x3103, 0x11); /* Select PLL input clock */
-    ov5645_write(info->cam_i2c, 0x3008, 0x82); /* Software reset */
-    usleep(5000);
-
-    ret = ov5645_write_array(info->cam_i2c, ov5645_init_setting);
+    /* Make sure the sensor is present. */
+    ret = camera_sensor_detect(info);
     if (ret < 0) {
         goto error;
     }
@@ -1339,7 +1319,6 @@ error:
     if (info->cdsidev)
         csi_rx_close(info->cdsidev);
 
-    camera_op_power_down(dev);
     up_i2cuninitialize(info->cam_i2c);
 
     gpio_deactivate(OV5645_GPIO_PWDN);
@@ -1358,7 +1337,7 @@ static void camera_dev_close(struct device *dev)
 
     /* Stop the stream, power the sensor down, and stop the CSI receiver. */
     ov5645_set_stream(info, false);
-    camera_op_power_down(dev);
+    ov5645_power_off(info);
     usleep(10);
     csi_rx_stop(info->cdsidev);
 
@@ -1406,8 +1385,6 @@ static void camera_dev_remove(struct device *dev)
 }
 
 static struct device_camera_type_ops camera_type_ops = {
-    .power_up           = camera_op_power_up,
-    .power_down         = camera_op_power_down,
     .capabilities       = camera_op_capabilities,
     .get_required_size  = camera_op_get_required_size,
     .set_streams_cfg    = camera_op_set_streams_cfg,
