@@ -78,8 +78,13 @@ all: tftf
 
 # trusted firmware generation
 tftf: build_bin
+	echo "creating tftf image at: $(TFTFDIR)"
+
+	# rename nuttx to nuttx.elf for create-tftf tool
 	mv $(NUTTX_BUILDBASE)/image/nuttx \
 		$(NUTTX_BUILDBASE)/image/nuttx.elf
+
+	# run create-tftf
 	$(BOOTROM_TOOLS_ROOT)/create-tftf \
 		--elf $(NUTTX_BUILDBASE)/image/nuttx.elf \
 		--outdir $(TFTFDIR) \
@@ -92,21 +97,26 @@ tftf: build_bin
 		--start 0x`grep '\bReset_Handler$$' $(NUTTX_BUILDBASE)/image/System.map | cut -d ' ' -f 1`
 
 tftf_mkoutput:
+	echo "creating tftf output directory: $(TFTFDIR)"
 	mkdir -p $(TFTFDIR)
 
 cp_source: tftf_mkoutput
+	echo "copying module source to build directory: $(BUILDBASE)"
 	cp -r $(MODULE_PATH)/* $(BUILDBASE)
 
 build_bin: cp_source
+	echo "starting firmware build"
 	$(SCRIPTPATH)/build.sh
 
 # configuration rules
 menuconfig:
+	# copy config file to nuttx folder, run menuconfig rule, copy back
 	cp $(OOT_CONFIG) $(TOPDIR)/.config
 	$(MAKE) -C $(TOPDIR) menuconfig
 	cp $(TOPDIR)/.config $(OOT_CONFIG)
 
 updateconfig:
+	# copy config file to nuttx folder, run menuconfig rule, copy back
 	cp $(OOT_CONFIG) $(TOPDIR)/.config
 	$(MAKE) -C $(TOPDIR) olddefconfig > /dev/null 2>&1
 	cp $(TOPDIR)/.config $(OOT_CONFIG)
@@ -115,28 +125,34 @@ updateconfig:
 # es2 bootloader image
 # FIXME: this only needed for ES2 chip and should be removed when ES3 is out
 es2_mkoutput:
+	echo "creating bootrom output directory: $(BOOTROM_BUILDBASE)"
 	mkdir -p $(BOOTROM_BUILDBASE)
 
 es2boot: es2_mkoutput
+	echo "building bootrom.bin in $(BOOTROM_BUILDBASE)"
 	cd $(BOOTROM_ROOT) && ./configure es2tsb $(vendor_id) $(product_id)
 	$(MAKE) -C $(BOOTROM_ROOT) OUTROOT=$(BOOTROM_BUILDBASE)
 	truncate -s 2M $(BOOTROM_BUILDBASE)/bootrom.bin
 
 es2boot_clean:
+	echo "removing: $(BOOTROM_BUILDBASE)"
 	rm -rf $(BOOTROM_BUILDBASE)
 ### ===
 
 
 # init git submodules
 submodule:
+	echo "fetching git submodules"
 	git submodule init
 	git submodule update
 
 # cleaning rules
 clean:
+	echo "removing build directory: $(BUILDBASE)"
 	rm -rf $(BUILDBASE)
 
 distclean: clean es2boot_clean
+	echo "removing: $(BUILDDIR)"
 	rm -rf $(BUILDDIR)
 
 .PHONY: all clean distclean submodule
