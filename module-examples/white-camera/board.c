@@ -1036,12 +1036,6 @@ static int ov5645_configure(struct sensor_info *info,
 static int camera_op_capabilities(struct device *dev, uint32_t *size,
                                   uint8_t *capabilities)
 {
-    struct sensor_info *info = device_get_private(dev);
-
-    if (info->state != OV5645_STATE_OPEN) {
-        return -EPERM;
-    }
-
     /* init capabilities [Fill in fake value]*/
     capabilities[0] = CAP_METADATA_GREYBUS;
     capabilities[0] |= CAP_METADATA_MIPI;
@@ -1061,12 +1055,6 @@ static int camera_op_capabilities(struct device *dev, uint32_t *size,
 static int camera_op_get_required_size(struct device *dev, uint8_t operation,
                                        uint16_t *size)
 {
-    struct sensor_info *info = device_get_private(dev);
-
-    if (info->state != OV5645_STATE_OPEN) {
-        return -EPERM;
-    }
-
     switch (operation) {
     case SIZE_CAPABILITIES:
         *size = 16;
@@ -1096,9 +1084,6 @@ static int camera_op_set_streams_cfg(struct device *dev, uint8_t *num_streams,
     const struct ov5645_mode_info *cfg;
     uint8_t i;
     int ret;
-
-    if (info->state != OV5645_STATE_OPEN)
-        return -EINVAL;
 
     /*
      * When unconfiguring the module we can uninit CSI-RX right away as the
@@ -1181,10 +1166,6 @@ static int camera_op_capture(struct device *dev, struct capture_info *capt_info)
     struct sensor_info *info = device_get_private(dev);
     int ret;
 
-    if (info->state != OV5645_STATE_OPEN) {
-        return -EPERM;
-    }
-
     /*
      * Start the CSI receiver first as it requires the D-PHY lines to be in the
      * LP-11 state to synchronize to the transmitter.
@@ -1215,10 +1196,6 @@ static int camera_op_flush(struct device *dev, uint32_t *request_id)
 {
     struct sensor_info *info = device_get_private(dev);
     int ret;
-
-    if (info->state != OV5645_STATE_OPEN) {
-        return -EPERM;
-    }
 
     /*
      * Stop the sensor first as the CSI receiver requires the D-PHY lines to be
