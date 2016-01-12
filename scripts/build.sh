@@ -68,8 +68,6 @@ build_image_from_defconfig() {
 
   pushd $ARA_BUILD_TOPDIR/nuttx > /dev/null
 
-  make distclean
-
   # copy Make.defs to build output tree
   if ! install -m 644 -p ${configpath}/Make.defs ${ARA_BUILD_TOPDIR}/nuttx/Make.defs  >/dev/null 2>&1; then
       echo "Warning: Failed to copy Make.defs"

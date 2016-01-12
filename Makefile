@@ -77,7 +77,7 @@ export OOT_MANIFEST
 all: tftf
 
 # trusted firmware generation
-tftf: copy_bin
+tftf: build_bin
 	mv $(NUTTX_BUILDBASE)/image/nuttx \
 		$(NUTTX_BUILDBASE)/image/nuttx.elf
 	$(BOOTROM_TOOLS_ROOT)/create-tftf \
@@ -91,28 +91,14 @@ tftf: copy_bin
 		--no-hamming-balance \
 		--start 0x`grep '\bReset_Handler$$' $(NUTTX_BUILDBASE)/image/System.map | cut -d ' ' -f 1`
 
-copy_bin: mkoutput cp_source build_bin
-	# no longer neccessary
-
-mkoutput:
+tftf_mkoutput:
 	mkdir -p $(TFTFDIR)
-	mkdir -p $(BOOTROM_BUILDBASE)
 
-cp_source:
+cp_source: tftf_mkoutput
 	cp -r $(MODULE_PATH)/* $(BUILDBASE)
 
-build_bin: yuck_init
+build_bin: cp_source
 	$(SCRIPTPATH)/build.sh
-
-# build_ara_image.sh (called in $(SCRIPTPATH)/build.sh) runs a distclean on
-# Nuttx root directory before copying it in an empty $(BUILDNAME) in order to
-# compile it. If Nuttx is clean, performing a distclean on it raises tons of
-# warning and the only way to avoid that is to initialize a context in it
-# (yuck!)
-yuck_init:
-	cp $(SCRIPTPATH)/Make.defs $(TOPDIR)
-	cp $(OOT_CONFIG) $(TOPDIR)/.config
-	$(MAKE) -C $(TOPDIR) context
 
 # configuration rules
 menuconfig:
@@ -128,7 +114,10 @@ updateconfig:
 ### ===
 # es2 bootloader image
 # FIXME: this only needed for ES2 chip and should be removed when ES3 is out
-es2boot: mkoutput
+es2_mkoutput:
+	mkdir -p $(BOOTROM_BUILDBASE)
+
+es2boot: es2_mkoutput
 	cd $(BOOTROM_ROOT) && ./configure es2tsb $(vendor_id) $(product_id)
 	$(MAKE) -C $(BOOTROM_ROOT) OUTROOT=$(BOOTROM_BUILDBASE)
 	truncate -s 2M $(BOOTROM_BUILDBASE)/bootrom.bin
@@ -149,8 +138,6 @@ clean:
 
 distclean: clean es2boot_clean
 	rm -rf $(BUILDDIR)
-	$(MAKE) -C $(TOPDIR) apps_distclean
-	$(MAKE) -C $(TOPDIR) distclean
 
 .PHONY: all clean distclean submodule
 ifndef VERBOSE
