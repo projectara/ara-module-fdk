@@ -22,13 +22,10 @@
 
     >$ make
 
-    Once built, you will find the following files in the newly generated
-    `build/module-examples/skeleton/image` directory:
+    Once built, you will find the following file in the newly generated
+    `build/module-examples/skeleton/tftf` directory:
 
     * `ara:00000126:00001000:00000000:00000000:02.tftf`: a signed TFTF image
-    * `nuttx.elf`: Firmware ELF image
-    * `nuttx.bin`: Firmware BIN image (raw binary) extended to 2M
-    * `System.map`: Map linking each function of the firmware to its address
 
 # Developing a new module
 
@@ -54,8 +51,12 @@ allowed in the module name.*
 
     >$ make MODULE={MODULE_NAME}
 
-5. The generated files are in `build/{MODULE_NAME}/image` and can be flashed to
-   the GPBridge
+5. The following generated files are in `build/{MODULE_NAME}/nuttx_build/image`
+ and can be flashed to the GPBridge
+
+ * `nuttx.elf`: Firmware ELF image
+ * `nuttx.bin`: Firmware BIN image (raw binary) extended to 2M
+ * `System.map`: Map linking each function of the firmware to its
 
 In order to clean the repository, there are two possible commands:
 
@@ -76,19 +77,20 @@ name of your module.
 
     >$ make MODULE={MODULE_NAME} es2boot
 
-3. Flash the resulting image located at `build/{MODULE_NAME}/image/bootrom.bin`
+3. Flash the resulting image located at
+ `build/{MODULE_NAME}/bootrom/bootrom.bin`
    on the module using the Dediprog SF-100.
 
-    >$ flashrom --programmer dediprog -w build/{MODULE_NAME}/image/bootrom.bin
+    >$ flashrom --programmer dediprog -w build/{MODULE_NAME}/bootrom/bootrom.bin
 
 4. Build the TFTF firmware image:
 
     >$ make MODULE={MODULE_NAME} tftf
 
 5. Copy the resulting image located at
-   `build/{MODULE_NAME}/image/ara:....:02.tftf` to the Android filesystem:
+   `build/{MODULE_NAME}/tftf/ara:....:02.tftf` to the Android filesystem:
 
-    >$ adb push build/{MODULE_NAME}/image/*.tftf /data/firmware
+    >$ adb push build/{MODULE_NAME}/tftf/*.tftf /data/firmware
 
 You might have to create `/data/firmware` before on the Android filesystem:
 
