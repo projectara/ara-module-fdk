@@ -130,12 +130,10 @@ updateconfig:
 # FIXME: this only needed for ES2 chip and should be removed when ES3 is out
 es2boot: mkoutput
 	cd $(BOOTROM_ROOT) && ./configure es2tsb $(vendor_id) $(product_id)
-	$(MAKE) -C $(BOOTROM_ROOT) OUTROOT=$(MODULE)
-	cp $(BOOTROM_ROOT)/$(MODULE)/bootrom.bin $(BOOTROM_BUILDBASE)
+	$(MAKE) -C $(BOOTROM_ROOT) OUTROOT=$(BOOTROM_BUILDBASE)
 	truncate -s 2M $(BOOTROM_BUILDBASE)/bootrom.bin
 
 es2boot_clean:
-	make -C $(BOOTROM_ROOT) clean OUTROOT=$(MODULE)
 	rm -rf $(BOOTROM_BUILDBASE)
 ### ===
 
