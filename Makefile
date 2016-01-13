@@ -85,7 +85,7 @@ tftf: copy_bin
 	$(BOOTROM_TOOLS_ROOT)/create-tftf \
 		--elf $(OUTPUTIMAGE)/nuttx.elf --outdir $(OUTPUTIMAGE) \
 		--unipro-mfg 0x126 --unipro-pid 0x1000 --ara-stage 2 \
-		--ara-vid $(vendor_id) --ara-pid $(product_id) \
+		--ara-vid $(vendor_id) --ara-pid $(product_id) --no-hamming-balance \
 		--start 0x`grep '\bReset_Handler$$' $(OUTPUTIMAGE)/System.map | cut -d ' ' -f 1`
 
 copy_bin: mkoutput cp_source build_bin
