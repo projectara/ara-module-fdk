@@ -92,12 +92,13 @@ name of your module.
 
     >$ adb push build/{MODULE_NAME}/tftf/*.tftf /data/firmware
 
-You might have to create `/data/firmware` before on the Android filesystem:
-
-    >$ adb shell
-    >Android$ su
-    >Android$ mkdir -p /data/firmware
-    >Android$ chmod 777 /data/firmware
+    You might have to create `/data/firmware` before on the Android filesystem:
+```
+$ adb shell
+Android$ su
+Android$ mkdir -p /data/firmware
+Android$ chmod 777 /data/firmware
+```
 
 6. If everything goes fine, the firmware image should be automatically
    transfered to the module after the module is hot-plugged.
