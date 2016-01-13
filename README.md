@@ -8,17 +8,24 @@
 
     >$ cd ./ara-module-fdk
 
-3. Initialize the submodules
+3. Switch to stable release
+
+    By default, the FDK will be initialized with the *development branch*.  
+    The latest tagged release is `mdk-v0.4.0`. To switch to a stable release:
+
+    >$ git checkout mdk-0.4.0
+
+4. Initialize the submodules
 
     >$ make submodule
 
-    This command will download the submodules
+    This command will download compatible versions of the submodules
     [bootrom](https://github.com/projectara/bootrom),
     [bootrom-tools](https://github.com/projectara/bootrom-tools),
     [manifest](https://github.com/projectara/manifesto) and
     [nuttx](https://github.com/projectara/nuttx).
 
-4. Build the default skeleton module
+5. Build the default skeleton module
 
     >$ make
 
@@ -114,4 +121,13 @@ cd kconfig-frontends-3.12.0.0
 ./configure
 make
 sudo make install
+```
+
+# Switching to development branch
+
+To use the latest unstable version of the FDK and submodules:
+
+```
+$ git checkout master
+$ git submodule update --remote
 ```
