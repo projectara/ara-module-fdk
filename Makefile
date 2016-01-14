@@ -146,6 +146,14 @@ submodule:
 	git submodule init
 	git submodule update
 
+# build all modules
+ALL_MODULES_DIR=$(wildcard module-examples/*)
+ALL_MODULES_BUILD=$(addsuffix -allbuild,$(ALL_MODULES_DIR))
+build-all: $(ALL_MODULES_BUILD)
+
+%-allbuild: %
+	$(MAKE) MODULE=$<
+
 # cleaning rules
 clean:
 	echo "removing build directory: $(BUILDBASE)"
