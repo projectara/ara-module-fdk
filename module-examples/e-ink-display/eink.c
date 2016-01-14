@@ -38,8 +38,6 @@
 #include <nuttx/clock.h>
 #include <nuttx/device_hid.h>
 
-#include <tsb_scm.h>
-
 #define MAX_IO_INPUT            2       /* two buttons for this module */
 #define GPIO_KBDPAGEUP          0
 #define GPIO_KBDPAGEDOWN        9
@@ -492,35 +490,19 @@ static int eink_hw_initialize(struct device *dev, struct hid_info *dev_info)
 {
     int ret = 0;
 
-    ret = tsb_request_pinshare(TSB_PIN_GPIO9 | TSB_PIN_UART_CTSRTS);
-    if (ret) {
-        lowsyslog("EINK: cannot get ownership of buttons pins\n");
-        return ret;
-    }
-
-    tsb_set_pinshare(TSB_PIN_GPIO9);
-    tsb_clr_pinshare(TSB_PIN_UART_CTSRTS);
-
     /* initialize GPIO pin */
     if (GPIO_KBDPAGEUP >= gpio_line_count() ||
         GPIO_KBDPAGEDOWN >= gpio_line_count()) {
-        ret = -EIO;
-        goto err_hw_init;
+        return -EIO;
     }
 
     ret = eink_gpio_init(dev, GPIO_KBDPAGEUP);
-    if (ret) {
-        goto err_hw_init;
-    }
+    if (ret)
+        return ret;
 
     ret = eink_gpio_init(dev, GPIO_KBDPAGEDOWN);
-    if (ret) {
-        goto err_hw_init;
-    }
-
-err_hw_init:
-    tsb_release_pinshare(TSB_PIN_GPIO9 | TSB_PIN_UART_CTSRTS);
-    return ret;
+    if (ret)
+        return ret;
 }
 
 /**
@@ -534,7 +516,6 @@ err_hw_init:
 static int eink_hw_deinitialize(struct device *dev)
 {
     eink_gpios_deinit(dev);
-    tsb_release_pinshare(TSB_PIN_GPIO9 | TSB_PIN_UART_CTSRTS);
 
     return 0;
 }
