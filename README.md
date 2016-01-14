@@ -110,19 +110,6 @@ Android$ chmod 777 /data/firmware
 6. If everything goes fine, the firmware image should be automatically
    transfered to the module after the module is hot-plugged.
 
-# Installing kconfig-frontends
-
-Run the following commands in order to install `kconfig-frontends`:
-
-```
-wget http://ymorin.is-a-geek.org/download/kconfig-frontends/kconfig-frontends-3.12.0.0.tar.bz2
-tar xjvf kconfig-frontends-3.12.0.0.tar.bz2
-cd kconfig-frontends-3.12.0.0
-./configure
-make
-sudo make install
-```
-
 # Switching to development branch
 
 To use the latest unstable version of the FDK and submodules:
