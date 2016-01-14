@@ -1263,44 +1263,46 @@ static int camera_dev_open(struct device *dev)
         return -EBUSY;
     }
 
-    gpio_activate(OV5645_GPIO_PWDN);
-    gpio_activate(OV5645_GPIO_RESET);
+    ret = gpio_activate(OV5645_GPIO_PWDN);
+    if (ret)
+        goto error_gpio1;
+    ret = gpio_activate(OV5645_GPIO_RESET);
+    if (ret)
+        goto error_gpio2;
 
     /* Initialize I2C access. */
     info->cam_i2c = up_i2cinitialize(OV5645_I2C_PORT);
     if (!info->cam_i2c) {
         ret = -EIO;
-        goto error;
+        goto error_i2c;
     }
 
     /* Make sure the sensor is present. */
     ret = camera_sensor_detect(info);
     if (ret < 0) {
-        goto error;
+        goto error_sensor;
     }
 
     /* Open the CSI receiver. */
     info->cdsidev = csi_rx_open(0);
     if (info->cdsidev == NULL) {
         ret = -EINVAL;
-        goto error;
+        goto error_csi;
     }
 
     info->state = OV5645_STATE_OPEN;
 
     return 0;
 
-error:
-    printf("Camera initialization failed\n");
-
-    if (info->cdsidev)
-        csi_rx_close(info->cdsidev);
-
+error_csi:
+error_sensor:
     up_i2cuninitialize(info->cam_i2c);
-
-    gpio_deactivate(OV5645_GPIO_PWDN);
+error_i2c:
     gpio_deactivate(OV5645_GPIO_RESET);
-
+error_gpio2:
+    gpio_deactivate(OV5645_GPIO_PWDN);
+error_gpio1:
+    printf("Camera initialization failed\n");
     return ret;
 }
 

@@ -298,7 +298,7 @@ static int btn_software_debounce(struct device *dev,
 {
     uint8_t value = 0;
 
-    gpio_mask_irq(irq);
+    gpio_irq_mask(irq);
 
     value = gpio_get_value(btn_info->gpio);
 
@@ -311,7 +311,7 @@ static int btn_software_debounce(struct device *dev,
         sem_post(&btn_info->active_debounce);
     }
 
-    gpio_unmask_irq(irq);
+    gpio_irq_unmask(irq);
 
     return 0;
 }
@@ -395,7 +395,7 @@ static void eink_gpio_deinit(struct button_info *btn_info)
     }
 
     sem_destroy(&btn_info->active_debounce);
-    gpio_mask_irq(btn_info->gpio);
+    gpio_irq_mask(btn_info->gpio);
     gpio_deactivate(btn_info->gpio);
     list_del(&btn_info->list);
     free(btn_info);
@@ -443,10 +443,12 @@ static int eink_gpio_init(struct device *dev, uint16_t gpio)
 
     btn_info->gpio = gpio;
 
-    gpio_activate(gpio);
+    ret = gpio_activate(gpio);
+    if (ret != 0)
+        return ret;
     gpio_direction_in(gpio);
-    gpio_mask_irq(gpio);
-    set_gpio_triggering(gpio, IRQ_TYPE_EDGE_BOTH);
+    gpio_irq_mask(gpio);
+    gpio_irq_settriggering(gpio, IRQ_TYPE_EDGE_BOTH);
     sem_init(&btn_info->active_debounce, 0, 0);
     list_add(&info->device_list, &btn_info->list);
 
@@ -457,7 +459,7 @@ static int eink_gpio_init(struct device *dev, uint16_t gpio)
         if (ret) {
             goto err_gpio_init;
         }
-        gpio_irqattach(gpio, eink_handle_btn_irq_event);
+        gpio_irq_attach(gpio, eink_handle_btn_irq_event);
 
     } else if (gpio == GPIO_KBDPAGEDOWN) {
         btn_info->Keycode = KEYCODE_PAGEDOWN;
@@ -466,7 +468,7 @@ static int eink_gpio_init(struct device *dev, uint16_t gpio)
         if (ret) {
             goto err_gpio_init;
         }
-        gpio_irqattach(gpio, eink_handle_btn_irq_event);
+        gpio_irq_attach(gpio, eink_handle_btn_irq_event);
     } else {
         goto err_gpio_init;
     }
@@ -541,11 +543,11 @@ static int eink_power_set(struct device *dev, bool on)
 {
     if (on) {
         /* enable interrupt */
-        gpio_unmask_irq(GPIO_KBDPAGEUP);
-        gpio_unmask_irq(GPIO_KBDPAGEDOWN);
+        gpio_irq_unmask(GPIO_KBDPAGEUP);
+        gpio_irq_unmask(GPIO_KBDPAGEDOWN);
     } else {
-        gpio_mask_irq(GPIO_KBDPAGEUP);
-        gpio_mask_irq(GPIO_KBDPAGEDOWN);
+        gpio_irq_mask(GPIO_KBDPAGEUP);
+        gpio_irq_mask(GPIO_KBDPAGEDOWN);
     }
 
     return 0;
