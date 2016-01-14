@@ -10,8 +10,8 @@
 
 3. Switch to stable release:
 
-    By default, the FDK will be initialized with the *development branch*.  
-    The latest tagged release is `mdk-v0.4.0`. To switch to a stable release:
+    By default, the FDK will be initialized with the *development branch*. The
+    latest tagged release is `mdk-v0.4.0`. To switch to a stable release:
 
     >$ git checkout mdk-0.4.0
 
@@ -85,8 +85,8 @@ name of your module.
     >$ make MODULE={MODULE_NAME} es2boot
 
 3. Flash the resulting image located at
- `build/{MODULE_NAME}/bootrom/bootrom.bin`
-   on the module using the Dediprog SF-100.
+   `build/{MODULE_NAME}/bootrom/bootrom.bin` on the module using the Dediprog
+   SF-100:
 
     >$ flashrom --programmer dediprog -w build/{MODULE_NAME}/bootrom/bootrom.bin
 
