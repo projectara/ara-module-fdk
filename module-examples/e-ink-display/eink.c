@@ -329,7 +329,7 @@ static int eink_handle_btn_irq_event(int irq, FAR void *context)
     struct button_info *btn_info = NULL;
     int ret = 0;
 
-    if (!dev || !dev->private) {
+    if (!dev || !device_get_private(dev)) {
         return ERROR;
     }
 
