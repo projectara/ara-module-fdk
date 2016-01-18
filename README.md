@@ -42,7 +42,7 @@
     Once built, you will find the following file in the newly generated
     `build/module-examples/skeleton/tftf` directory:
 
-    * `ara:00000126:00001000:00000000:00000000:02.tftf`: a signed TFTF image
+    * `ara_00000126_00001000_00000000_00000000_02.tftf`: a signed TFTF image
 
 # Developing a new module
 
@@ -120,7 +120,7 @@ name of your module.
     ```
 
 5. Copy the resulting image located at
-   `build/{MODULE_NAME}/tftf/ara:....:02.tftf` to the Android filesystem:
+   `build/{MODULE_NAME}/tftf/ara_..._02.tftf` to the Android filesystem:
 
     ```
     $ adb push build/{MODULE_NAME}/tftf/*.tftf /data/firmware
