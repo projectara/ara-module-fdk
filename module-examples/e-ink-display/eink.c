@@ -38,6 +38,7 @@
 #include <nuttx/clock.h>
 #include <nuttx/device_hid.h>
 #include <nuttx/hid.h>
+#include <nuttx/util.h>
 
 #define MAX_IO_INPUT            2       /* two buttons for this module */
 #define GPIO_KBDPAGEUP          0
