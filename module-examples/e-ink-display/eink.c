@@ -354,7 +354,7 @@ static int eink_handle_btn_irq_event(int irq, FAR void *context)
  * @param len Max input buffer size
  * @return 0 on success, negative for error
  */
-static int eink_get_input_report(struct device *dev, uint8_t report_id,
+static int eink_get_input_report(struct device *dev, enum hid_report_type report_id,
                                  uint8_t *data, uint16_t len)
 {
     struct hid_kbd_data *kbd;
@@ -535,7 +535,7 @@ static int eink_power_set(struct device *dev, bool on)
     return 0;
 }
 
-static int eink_get_report(struct device *dev, uint8_t report_type,
+static int eink_get_report(struct device *dev, enum hid_report_type report_type,
                            uint8_t report_id, uint8_t *data, uint16_t len)
 {
     int ret = 0;
