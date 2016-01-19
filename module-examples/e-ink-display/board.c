@@ -35,6 +35,7 @@
 #include <nuttx/device.h>
 #include <nuttx/device_table.h>
 #include <nuttx/device_hid.h>
+#include <nuttx/hid.h>
 
 static struct device devices[] = {
     {
