@@ -144,7 +144,7 @@ es2boot_clean:
 submodule:
 	echo "fetching git submodules"
 	git submodule init
-	git submodule update
+	git submodule update --remote
 
 # build all modules
 ALL_MODULES_DIR=$(wildcard module-examples/*)
