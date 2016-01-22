@@ -1,12 +1,16 @@
 [submodule "nuttx"]
 	path = firmware/nuttx
 	url = https://github.com/projectara/nuttx.git
+	branch = demo
 [submodule "manifesto"]
 	path = tools/manifesto
 	url = https://github.com/projectara/manifesto.git
+	branch = demo
 [submodule "bootrom-tools"]
 	path = tools/bootrom-tools
 	url = https://github.com/projectara/bootrom-tools.git
+	branch = demo
 [submodule "bootrom"]
 	path = firmware/bootrom
 	url = https://github.com/projectara/bootrom.git
+	branch = demo
