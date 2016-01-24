@@ -42,7 +42,7 @@ string = eInk
 
 ; Interface product string (id can't be 0)
 [string-descriptor 2]
-string = eInk-Display module
+string = 2x2 Display
 
 ; Control protocol on CPort 0
 [cport-descriptor 0]
