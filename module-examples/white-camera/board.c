@@ -1183,6 +1183,9 @@ static int camera_op_capture(struct device *dev, struct capture_info *capt_info)
 
     info->req_id = capt_info->request_id;
 
+    /* Demo only: give some time to unipro network speed to reach high speed */
+    usleep(200000);
+
     return ret;
 }
 
