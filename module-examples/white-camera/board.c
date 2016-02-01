@@ -35,9 +35,9 @@
 
 #include <nuttx/device.h>
 #include <nuttx/device_camera.h>
+#include <nuttx/device_i2c.h>
 #include <nuttx/device_table.h>
 #include <nuttx/gpio.h>
-#include <nuttx/i2c.h>
 #include <nuttx/kmalloc.h>
 #include <nuttx/util.h>
 
@@ -76,7 +76,7 @@ enum ov5645_state {
  */
 struct sensor_info {
     struct device *dev;
-    struct i2c_dev_s *cam_i2c;
+    struct device *cam_i2c;
     enum ov5645_state state;
     struct cdsi_dev *cdsidev;
     uint8_t req_id;
@@ -876,12 +876,12 @@ static const struct ov5645_mode_info ov5645_mode_settings[] = {
  * @param addr Address of i2c to read
  * @return the byte read on success or a negative error code on failure
  */
-static int ov5645_read(struct i2c_dev_s *dev, uint16_t addr)
+static int ov5645_read(struct device *dev, uint16_t addr)
 {
     uint8_t cmd[2];
     uint8_t buf;
     int ret;
-    struct i2c_msg_s msg[] = {
+    struct device_i2c_request msg[] = {
         {
             .addr = OV5645_I2C_ADDR,
             .flags = 0,
@@ -889,7 +889,7 @@ static int ov5645_read(struct i2c_dev_s *dev, uint16_t addr)
             .length = 2,
         }, {
             .addr = OV5645_I2C_ADDR,
-            .flags = I2C_M_READ,
+            .flags = I2C_FLAG_READ,
             .buffer = &buf,
             .length = 1,
         }
@@ -898,7 +898,7 @@ static int ov5645_read(struct i2c_dev_s *dev, uint16_t addr)
     cmd[0] = (addr >> 8) & 0xff;
     cmd[1] = addr & 0xff;
 
-    ret = I2C_TRANSFER(dev, msg, 2);
+    ret = device_i2c_transfer(dev, msg, 2);
     if (ret != OK) {
         printf("ov5645: i2c read failed\n", ret);
         return -EIO;
@@ -914,11 +914,11 @@ static int ov5645_read(struct i2c_dev_s *dev, uint16_t addr)
  * @param data Data to write
  * @return zero for success or non-zero on any faillure
  */
-static int ov5645_write(struct i2c_dev_s *dev, uint16_t addr, uint8_t data)
+static int ov5645_write(struct device *dev, uint16_t addr, uint8_t data)
 {
     uint8_t cmd[3];
     int ret;
-    struct i2c_msg_s msg[] = {
+    struct device_i2c_request msg[] = {
         {
             .addr = OV5645_I2C_ADDR,
             .flags = 0,
@@ -931,7 +931,7 @@ static int ov5645_write(struct i2c_dev_s *dev, uint16_t addr, uint8_t data)
     cmd[1] = addr & 0xFF;
     cmd[2] = data;
 
-    ret = I2C_TRANSFER(dev, msg, 1);
+    ret = device_i2c_transfer(dev, msg, 1);
     if (ret != OK) {
         return -EIO;
     }
@@ -945,7 +945,7 @@ static int ov5645_write(struct i2c_dev_s *dev, uint16_t addr, uint8_t data)
  * @param vals Address and values of i2c to write
  * @return zero for success or non-zero on any faillure
  */
-static int ov5645_write_array(struct i2c_dev_s *dev,
+static int ov5645_write_array(struct device *dev,
                               const struct reg_val_tbl *vals)
 {
     int ret;
@@ -1271,7 +1271,7 @@ static int camera_dev_open(struct device *dev)
         goto error_gpio2;
 
     /* Initialize I2C access. */
-    info->cam_i2c = up_i2cinitialize(OV5645_I2C_PORT);
+    info->cam_i2c = device_open(DEVICE_TYPE_I2C_HW, OV5645_I2C_PORT);
     if (!info->cam_i2c) {
         ret = -EIO;
         goto error_i2c;
@@ -1296,7 +1296,7 @@ static int camera_dev_open(struct device *dev)
 
 error_csi:
 error_sensor:
-    up_i2cuninitialize(info->cam_i2c);
+    device_close(info->cam_i2c);
 error_i2c:
     gpio_deactivate(OV5645_GPIO_RESET);
 error_gpio2:
@@ -1322,7 +1322,7 @@ static void camera_dev_close(struct device *dev)
 
     /* Free all of the resources */
     csi_rx_close(info->cdsidev);
-    up_i2cuninitialize(info->cam_i2c);
+    device_close(info->cam_i2c);
 
     gpio_deactivate(OV5645_GPIO_PWDN);
     gpio_deactivate(OV5645_GPIO_RESET);
