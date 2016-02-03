@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ara-msp-manifest xmlns:msp="http://schemas.android.com/apk/res/$package">
+    <detailed-info
+	    msp:vid="$vid"
+	    msp:pid="$pid"
+	    msp:version="1"
+	    msp:optimal-slot="1"/>
+    #for $fwImg in $images
+    <firmware msp:fmwFileName="$fwImg['filename']" msp:fmwType="bridge" />    
+    #end for
+    <power-profile msp:name="power-profile" />
+    <signature msp:sigFileName="signature.sig" />
+    <certifications
+	    msp:sar="$cert_sar"
+	    msp:fcc="$cert_fcc"
+        msp:ce="$cert_ce"
+	/>
+</ara-msp-manifest>

@@ -93,7 +93,6 @@ tftf: build_bin
 		--ara-stage 2 \
 		--ara-vid $(vendor_id) \
 		--ara-pid $(product_id) \
-		--no-hamming-balance \
 		--start 0x`grep '\bReset_Handler$$' $(NUTTX_BUILDBASE)/image/System.map | cut -d ' ' -f 1`
 
 tftf_mkoutput:
