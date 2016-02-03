@@ -1,0 +1,210 @@
+#!/usr/bin/python
+
+import sys, os, os.path, StringIO, shutil
+import ConfigParser, subprocess
+from Cheetah.Template import Template
+from pprint import pprint
+
+# Those values are currently hardcoded into the firmware Makefile.
+DEFAULT_UNIPRO_MFG = 0x126
+DEFAULT_UNIPRO_PID = 0x1000
+
+def which(pgm):
+    """
+    Poor man equivalent of shell "which cmd"    
+    """
+    path = os.getenv('PATH')
+    for p in path.split(os.path.pathsep):
+        p = os.path.join(p,pgm)
+        if os.path.exists(p) and os.access(p, os.X_OK):
+            return p
+
+def getLastAndroidJarPath():
+    """
+    We need to find 'android.jar' for 'aapt' to generate a proper .apk so this
+    script cheats by using the path to the 'aapt' executable to find Android SDK
+    and the file it needs.
+    """
+    aaptPath = which("aapt")
+    aaptDir = os.path.dirname(aaptPath)
+    platformDir = os.path.join(aaptDir, "..", "..", "platforms/android-23")
+    androidJar = os.path.join(platformDir, "android.jar")
+    if not os.path.exists(androidJar): 
+        return None
+    else:
+        return androidJar
+    
+class ManifestParser(ConfigParser.ConfigParser):
+    def read(self, filename):
+        try:
+            text = open(filename).read()
+        except IOError:
+            pass
+        else:
+            file = StringIO.StringIO("[default]\n" + text)
+            self.readfp(file, filename)
+
+# Directories that needs to be created
+mftree = [
+    "assets",
+    "res",
+    "res/values",
+    "res/xml"
+]
+
+# The files that need to be copied whole to the manifest.
+mffiles = {
+    "msp-templates/Android.mk.tmpl":           "Android.mk",
+    "msp-templates/AndroidManifest.xml.tmpl":  "AndroidManifest.xml",
+    "msp-templates/attrs.xml.tmpl":            "res/values/attrs.xml",
+    "msp-templates/ara_msp_manifest.xml.tmpl": "res/xml/ara_msp_manifest.xml",
+    "msp-templates/power_profile.xml.tmpl":    "res/xml/power_profile.xml"
+}
+
+def readModuleManifest(mfdata, mfpath):
+    """
+    Read the configuration file for the target module. Currently
+    there is not much inside that file.
+    """
+    cfg = ManifestParser()
+    cfg.read(mfpath)
+    mfdata["vid"] = cfg.get("default", "vendor_id")
+    mfdata["pid"] = cfg.get("default", "product_id")
+    return mfdata
+
+def findFirmwareImageInDir(trgDir, mfdata, fwPatterns):
+    foundImgs = []
+    for root, dirs, files in os.walk(trgDir):
+        for imgFile in files: 
+            try:                
+                fwPatterns.index(imgFile)
+                if len(filter(lambda f: f["filename"] == imgFile, mfdata["images"])) == 0:
+                    sys.stdout.write("Found firmware: %s in %s\n" % (imgFile, root))
+                    fwImg = {
+                        "filename": imgFile,
+                        "path": root
+                    }
+                    mfdata["images"].append(fwImg)                
+            except ValueError:
+                pass
+                
+def findFirmwareImages(mfdata, srcPath):
+    """
+    Make a list of firmware images that needs to be copied in the manifest
+    directory.
+    """
+    mfdata["images"] = []
+    fwPatterns = []
+    for stage in range(2,3):
+        fwPatterns.append("ara_%08x_%08x_00000000_00000000_%02x.tftf" % (
+            DEFAULT_UNIPRO_MFG, DEFAULT_UNIPRO_PID, stage
+        ))
+    findFirmwareImageInDir(srcPath, mfdata, fwPatterns)
+                           
+def readTemplate(tmplFilename, mfdata):
+    """ 
+    Read a template file. Returns a string template.
+    """
+    tmplFile = None
+    try:
+        tmplFile = open(tmplFilename, "r")
+        tmplStr = tmplFile.read();
+        return Template(tmplStr, mfdata);
+    finally:
+        if tmplFile: 
+            tmplFile.close()
+                    
+def main(srcPath):
+    mfpath = os.path.join(srcPath, "module.mk")
+
+    # Removes the trailing / if it's there.
+    if srcPath.endswith("/"): 
+        srcPath = srcPath.rstrip("/")
+
+    mname = os.path.split(srcPath)[1].replace("-", "_")
+    mftarget = os.path.join(os.path.curdir, "manifests", mname)
+    mfdata = { "name": mname }
+    
+    if os.path.exists(mfpath):
+        readModuleManifest(mfdata, mfpath)
+        findFirmwareImages(mfdata, srcPath);        
+    else:   
+        raise Exception(("No such manifest file: %s") % mfpath)
+
+    # Create directories required for the manifest.
+    if not os.path.exists(mftarget):
+        os.makedirs(mftarget)
+
+    for mfdirname in mftree:
+        mfdir = os.path.join(mftarget, mfdirname)
+        if not os.path.exists(mfdir):
+            os.mkdir(mfdir)
+                                                
+    # Create the files
+    for tmplFilename in mffiles.keys():
+        tmplOutStr = str(readTemplate(tmplFilename, mfdata))
+        tmplOutFilename = os.path.join(mftarget, mffiles[tmplFilename])
+        try:
+            tmplOut = open(tmplOutFilename, "w")
+            tmplOut.write(tmplOutStr);
+        finally:
+            tmplOut.close();
+            
+    # Copy the firmware images.
+    for imgFile in mfdata["images"]:
+        src = os.path.join(imgFile["path"], imgFile["filename"])
+        trg = os.path.join(mftarget, "assets", imgFile["filename"])
+        shutil.copyfile(src, trg)
+    
+    # Erase the .apk files that might exists.
+    for f in [mname + "_unsigned_unaligned.apk",
+              mname + "_unsigned.apk",
+              mname + ".apk"]:               
+        if os.path.exists(f): os.unlink(f);              
+        
+    # Generate an unsigned, unaligned .apk
+    rc = subprocess.call(["aapt", "package",
+                             "--debug-mode",
+                             "-M", os.path.join(mftarget, "AndroidManifest.xml"),
+                             "-S", os.path.join(mftarget, "res"),
+                             "-A", os.path.join(mftarget, "assets"),
+                             "-I", getLastAndroidJarPath(),
+                             "-F", mname + "_unsigned_unaligned.apk"])
+    if rc != 0: 
+        sys.stderr.write("Generating the .apk with 'aapt' failed.\n")
+    
+    # Sign the .apk with the debug key
+    rc = subprocess.call(["jarsigner", 
+                            "-verbose", 
+                            "-sigalg", "SHA1withRSA", 
+                            "-digestalg", "SHA1",
+                            "-keystore", os.path.expanduser("~/.android/debug.keystore"),
+                            "-storepass", "android",
+                            mname + "_unaligned.apk", "androiddebugkey"])
+    if rc != 0:
+        sys.stderr.write("Signing the .apk with 'jarsigner' failed.\n")
+    
+    # Align the .apk
+    rc = subprocess.call(["zipalign", "-v", "4", mname + "_unaligned.apk", mname + ".apk"])
+    if rc != 0:
+        sys.stderr.write("Call of 'zipalign' on the .apk failed.\n")
+        
+if __name__ == "__main__":
+    programs = ["aapt", "jarsigner", "zipalign"]
+    for p in programs:
+        if not which(p):
+            sys.stderr.write("Make sure the programs 'aapt', 'jarsigner' and 'zipalign' can be found in the $PATH.\n")
+            sys.exit(1)
+    
+    if not getLastAndroidJarPath():
+        sys.stderr.write("Could not find 'android.jar' for 'android-23', make sure the last platform SDK package is installed.\n")
+        sys.exit(1)
+        
+    if not os.path.exists(os.path.expanduser("~/.android/debug.keystore")):
+        sys.stderr.write("Could not find ~/.android/debug.keystore for quick signature.\n")
+        sys.exit(1)
+        
+    if len(sys.argv) < 2:
+        sys.stderr.write("Usage: fdk2msp [built module directory]\n");
+    else:
+        main(sys.argv[1])

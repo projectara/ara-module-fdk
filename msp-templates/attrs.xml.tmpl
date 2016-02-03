@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+This file essentially describes the "schema" of items that can be possibly
+found in the ara_msp_description.xml file.
+-->
+
+<resources>
+    <!-- Firmware type, these are predefined -->
+    <attr name="fmwType">
+        <!-- GP bridge firmware -->
+        <enum name="bridge" value="0" />
+
+	<!-- Module-specific firmware (Wifi, BT, GPS, etc.) -->
+        <enum name="module" value="1" />
+    </attr>
+
+    <!-- Detailed info about the module -->
+    <declare-styleable name="detailed-info">
+        <attr name="vid" format="integer" />
+        <attr name="pid" format="integer" />
+        <attr name="version" format="integer" />
+        <attr name="optimal-slot" format="integer" />
+    </declare-styleable>
+
+    <!-- A given piece of firmware -->
+    <declare-styleable name="firmware">
+        <attr name="fmwFileName" format="string" />
+	<attr name="fmwType" />
+    </declare-styleable>
+
+    <!-- Module's power profile -->
+    <declare-styleable name="power-profile">
+        <attr name="name" format="string" />
+    </declare-styleable>
+
+    <!-- MSP sig information -->
+    <declare-styleable name="signature">
+        <attr name="sigFileName" format="string" />
+    </declare-styleable>
+
+    <!-- Regulatory certifications -->
+    <declare-styleable name="certifications">
+        <attr name="sar" format="boolean" />
+        <attr name="fcc" format="boolean" />
+        <attr name="ce" format="boolean" />
+    </declare-styleable>
+</resources>
