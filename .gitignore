@@ -6,3 +6,4 @@ nuttx.bin
 nuttx.elf
 *.tftf
 *.mnfb
+manifests
