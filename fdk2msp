@@ -70,6 +70,11 @@ def readModuleManifest(mfdata, mfpath):
     cfg.read(mfpath)
     mfdata["vid"] = cfg.get("default", "vendor_id")
     mfdata["pid"] = cfg.get("default", "product_id")
+    mfdata["package"] = cfg.get("default", "package")
+    mfdata["name"] = cfg.get("default", "name")
+    mfdata["cert_ce"] = cfg.get("default", "cert_ce")
+    mfdata["cert_fcc"] = cfg.get("default", "cert_fcc")
+    mfdata["cert_sar"] = cfg.get("default", "cert_sar")
     return mfdata
 
 def findFirmwareImageInDir(trgDir, mfdata, fwPatterns):
@@ -120,16 +125,17 @@ def main(srcPath):
     # Removes the trailing / if it's there.
     if srcPath.endswith("/"): 
         srcPath = srcPath.rstrip("/")
-
-    mname = os.path.split(srcPath)[1].replace("-", "_")
-    mftarget = os.path.join(os.path.curdir, "manifests", mname)
-    mfdata = { "name": mname }
-    
+        
+    mfdata = {}
+        
     if os.path.exists(mfpath):
         readModuleManifest(mfdata, mfpath)
         findFirmwareImages(mfdata, srcPath);        
     else:   
         raise Exception(("No such manifest file: %s") % mfpath)
+
+    mname = mfdata["name"]
+    mftarget = os.path.join(os.path.curdir, "manifests", mname)    
 
     # Create directories required for the manifest.
     if not os.path.exists(mftarget):
@@ -170,7 +176,7 @@ def main(srcPath):
                              "-A", os.path.join(mftarget, "assets"),
                              "-I", getLastAndroidJarPath(),
                              "-F", mname + "_unsigned_unaligned.apk"])
-    if rc != 0: 
+    if not rc == 0: 
         sys.stderr.write("Generating the .apk with 'aapt' failed.\n")
     
     # Sign the .apk with the debug key
@@ -180,13 +186,14 @@ def main(srcPath):
                             "-digestalg", "SHA1",
                             "-keystore", os.path.expanduser("~/.android/debug.keystore"),
                             "-storepass", "android",
-                            mname + "_unaligned.apk", "androiddebugkey"])
-    if rc != 0:
+                            "-signedjar", mname + "_unaligned.apk",
+                            mname + "_unsigned_unaligned.apk", "androiddebugkey"])
+    if not rc == 0:
         sys.stderr.write("Signing the .apk with 'jarsigner' failed.\n")
     
     # Align the .apk
     rc = subprocess.call(["zipalign", "-v", "4", mname + "_unaligned.apk", mname + ".apk"])
-    if rc != 0:
+    if not rc == 0:
         sys.stderr.write("Call of 'zipalign' on the .apk failed.\n")
         
 if __name__ == "__main__":
