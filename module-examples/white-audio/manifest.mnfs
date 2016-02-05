@@ -64,4 +64,4 @@ bundle = 2
 protocol = 0x13
 
 [bundle-descriptor 2]
-class = 2
+class = 0x12
