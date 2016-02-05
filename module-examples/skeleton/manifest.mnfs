@@ -53,68 +53,68 @@ protocol = 0x00
 [bundle-descriptor 0]
 class = 0
 
-; GPIO protocol on CPort 3
-[cport-descriptor 3]
-bundle = 2
+; GPIO protocol on CPort 1
+[cport-descriptor 1]
+bundle = 1
 protocol = 0x02
 
-[bundle-descriptor 2]
+[bundle-descriptor 1]
 class = 2
 
-; I2C protocol on CPort 4
-[cport-descriptor 4]
-bundle = 3
+; I2C protocol on CPort 2
+[cport-descriptor 2]
+bundle = 2
 protocol = 0x03
 
-[bundle-descriptor 3]
+[bundle-descriptor 2]
 class = 3
 
-; UART protocol on CPort 5
-[cport-descriptor 5]
-bundle = 4
+; UART protocol on CPort 3
+[cport-descriptor 3]
+bundle = 3
 protocol = 0x04
 
-[bundle-descriptor 4]
+[bundle-descriptor 3]
 class = 4
 
-; USB protocol on CPort 6
-[cport-descriptor 6]
-bundle = 6
+; USB protocol on CPort 4
+[cport-descriptor 4]
+bundle = 4
 protocol = 0x06
 
-[bundle-descriptor 6]
+[bundle-descriptor 4]
 class = 6
 
-; SDIO protocol on CPort 7
-[cport-descriptor 7]
-bundle = 7
+; SDIO protocol on CPort 5
+[cport-descriptor 5]
+bundle = 5
 protocol = 0x07
 
-[bundle-descriptor 7]
+[bundle-descriptor 5]
 class = 7
 
-; BATTERY protocol on CPort 8
-[cport-descriptor 8]
-bundle = 8
+; BATTERY protocol on CPort 6
+[cport-descriptor 6]
+bundle = 6
 protocol = 0x08
 
-[bundle-descriptor 8]
+[bundle-descriptor 6]
 class = 8
 
-; PWM protocol on CPort 9
-[cport-descriptor 9]
-bundle = 9
+; PWM protocol on CPort 7
+[cport-descriptor 7]
+bundle = 7
 protocol = 0x09
 
-[bundle-descriptor 9]
+[bundle-descriptor 7]
 class = 9
 
-; SPI protocol on CPort 10
-[cport-descriptor 10]
-bundle = 11
+; SPI protocol on CPort 8
+[cport-descriptor 8]
+bundle = 8
 protocol = 0x0b
 
-[bundle-descriptor 11]
+[bundle-descriptor 8]
 class = 11
 
 ; DISPLAY (0x0c) automatically set up by SVC to use CPort 16
@@ -123,34 +123,34 @@ class = 11
 
 ; Skipping SENSOR (0x0e)
 
-; VIBRATOR protocol on CPort 11
-[cport-descriptor 11]
-bundle = 16
+; VIBRATOR protocol on CPort 9
+[cport-descriptor 9]
+bundle = 9
 protocol = 0x10
 
-[bundle-descriptor 16]
+[bundle-descriptor 9]
 class = 16
 
-; LOOPBACK protocol on CPort 12
-[cport-descriptor 12]
-bundle = 17
+; LOOPBACK protocol on CPort 10
+[cport-descriptor 10]
+bundle = 10
 protocol = 0x11
 
-[bundle-descriptor 17]
+[bundle-descriptor 10]
 class = 17
 
-; HID protocol on CPort 13
-[cport-descriptor 13]
-bundle = 5
+; HID protocol on CPort 11
+[cport-descriptor 11]
+bundle = 11
 protocol = 0x05
 
-[bundle-descriptor 5]
+[bundle-descriptor 11]
 class = 5
 
-; Lights protocol on CPort 14
-[cport-descriptor 14]
-bundle = 15
+; Lights protocol on CPort 12
+[cport-descriptor 12]
+bundle = 12
 protocol = 0x0f
 
-[bundle-descriptor 15]
+[bundle-descriptor 12]
 class = 15
