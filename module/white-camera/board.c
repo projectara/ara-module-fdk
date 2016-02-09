@@ -1030,38 +1030,17 @@ static int ov5645_configure(struct sensor_info *info,
 /**
  * @brief Get capabilities of camera module
  * @param dev Pointer to structure of device data
- * @param capabilities Pointer that will be stored Camera Module capabilities.
+ * @param caps Pointer that will be stored Camera Module capabilities.
  * @return 0 on success, negative errno on error
  */
-static int camera_op_capabilities(struct device *dev, uint32_t *size,
-                                  uint8_t *capabilities)
+static int camera_op_capabilities(struct device *dev, size_t *size,
+                                  const uint8_t **caps)
 {
-    /* init capabilities [Fill in fake value]*/
-    capabilities[0] = CAP_METADATA_GREYBUS;
-    capabilities[0] |= CAP_METADATA_MIPI;
-    capabilities[0] |= CAP_STILL_IMAGE;
-    capabilities[0] |= CAP_JPEG;
+    /* TODO: Not implemented yet. */
+    *capabilities = NULL;
+    *size = 0;
 
-    *size = sizeof(uint32_t);
     return 0;
-}
-
-/**
- * @brief Get required data size of camera module information
- * @param dev Pointer to structure of device data
- * @param capabilities Pointer that will be stored Camera Module capabilities.
- * @return 0 on success, negative errno on error
- */
-static int camera_op_get_required_size(struct device *dev, uint8_t operation,
-                                       uint16_t *size)
-{
-    switch (operation) {
-    case SIZE_CAPABILITIES:
-        *size = 16;
-        return 0;
-    default:
-        return -EINVAL;
-    }
 }
 
 /**
@@ -1365,7 +1344,6 @@ static void camera_dev_remove(struct device *dev)
 
 static struct device_camera_type_ops camera_type_ops = {
     .capabilities       = camera_op_capabilities,
-    .get_required_size  = camera_op_get_required_size,
     .set_streams_cfg    = camera_op_set_streams_cfg,
     .capture            = camera_op_capture,
     .flush              = camera_op_flush,
