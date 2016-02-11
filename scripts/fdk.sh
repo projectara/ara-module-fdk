@@ -43,6 +43,8 @@ BOOTROM_DIR="${FDK_BOOTROM_DIR:-./bootrom}"
 BOOTROM_TOOLS_DIR="${FDK_BOOTROM_TOOLS_DIR:-./bootrom-tools}"
 MANIFESTO_DIR="${FDK_MANIFESTO_DIR:-./manifesto}"
 
+CROSS_COMPILE_DIR=${FDK_CROSS_COMPILE_DIR:-./arm-none-eabi-4.9/bin}
+
 VERBOSITY=0
 LOG_FILE=
 
@@ -443,9 +445,16 @@ function nuttx_clean()
     fi
 }
 
+function _export_cross_compile()
+{
+    local cross_compile=$(cd ${CROSS_COMPILE_DIR} >/dev/null && pwd)
+    export PATH=${cross_compile}:${PATH}
+}
+
 function _export_manifesto()
 {
-    export PATH=${PATH}:${PWD}/${MANIFESTO_DIR}
+    local manifesto_path=$(cd ${MANIFESTO_DIR} >/dev/null && pwd)
+    export PATH=${manifesto_path}:${PATH}
 }
 
 function _export_versions()
@@ -469,6 +478,7 @@ function _export_build_name()
 
 function _nuttx_export_vars()
 {
+    _export_cross_compile
     _export_manifesto
     _export_versions
     _export_build_name
@@ -830,6 +840,7 @@ function bootrom_prepare()
 function bootrom_make()
 {
     echo_log 1 "# Making Bootrom"
+    _export_cross_compile
     _export_manifesto
     run_log 2 ${BUILD_DIR_BOOTROM}/configure es2tsb "${VENDOR_ID}" "${PRODUCT_ID}" || \
         die "Bootrom configuration failed"
