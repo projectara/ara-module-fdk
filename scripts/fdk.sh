@@ -672,17 +672,10 @@ function create_nuttx_tftf_module()
 function create_nuttx_ffff_module()
 # 1: path of input nuttx binary
 # 2: reference to path of output ffff binary (unset, gets defined in the function)
-# 3: reference to path of output tftf binary (unset, gets defined in the function)
+# 3: path to existing tftf binary
 {
-    local nuttx_tftf
-
-    create_nuttx_tftf_module "${1}" nuttx_tftf
-
-    printf -v "${3}" '%s' "${nuttx_tftf}"
-
-    # craft the filename for the ffff image from the filename we got back from
-    # the previous function
-    local ffff_filename="$(basename ${nuttx_tftf} .tftf).ffff"
+    # craft the filename for the ffff image from the tftf filename
+    local ffff_filename="$(basename ${3} .tftf).ffff"
     printf -v "${2}" '%s' "${BUILD_DIR_OUT}/${ffff_filename}"
 
     _create_nuttx_ffff "${nuttx_tftf}" "${!2}"
@@ -766,6 +759,7 @@ function nuttx_image_create()
     else
         # For all the module target, we need the elf version of compiled NuttX
         local nuttx_elf="${BUILD_DIR_OUT}/nuttx.elf"
+        local nuttx_tftf nuttx_ffff
         nuttx_copy_binary "nuttx" "${nuttx_elf}"
 
         # Module firmware (ES2, ES3)
@@ -773,19 +767,21 @@ function nuttx_image_create()
             case "${VERSION_CUR}" in
                 es2)
                     for TYPE_CUR in ${TYPE[@]}; do
-                        local nuttx_tftf
                         bootrom_tools_compile_create_tftf
                         create_nuttx_tftf_module "${nuttx_elf}" nuttx_tftf
                         image_congrats "Module ES2" "${nuttx_tftf}"
+                        nuttx_tftf=
                     done
                     ;;
                 es3)
                     for TYPE_CUR in ${TYPE[@]}; do
-                        local nuttx_ffff, nuttx_tftf
                         bootrom_tools_compile_create_ffff
-                        create_nuttx_ffff_module "${nuttx_elf}" nuttx_ffff nuttx_tftf
+                        create_nuttx_tftf_module "${nuttx_elf}" nuttx_tftf
                         image_congrats "Module ES3" "${nuttx_tftf}"
+                        create_nuttx_ffff_module "${nuttx_elf}" nuttx_ffff "${nuttx_tftf}"
                         image_congrats "Module ES3" "${nuttx_ffff}"
+                        nuttx_ffff=
+                        nuttx_tftf=
                     done
                     ;;
             esac
