@@ -269,6 +269,7 @@ function read_target_mk()
     BOARD_FILES=($(get_var_mk "board-files"))
     VENDOR_ID=$(get_var_mk "vendor_id")
     PRODUCT_ID=$(get_var_mk "product_id")
+    PRODUCT_ID_ES2=$(get_var_mk "product_id_es2")
     TYPE=($(get_var_mk "type"))
     VERSION=($(get_var_mk "version"))
     FRAME=$(get_var_mk "frame")
@@ -278,6 +279,7 @@ function read_target_mk()
     echo_log 1 "BOARD_FILES=${BOARD_FILES[@]}"
     echo_log 1 "VENDOR_ID=${VENDOR_ID}"
     echo_log 1 "PRODUCT_ID=${PRODUCT_ID}"
+    echo_log 1 "PRODUCT_ID_ES2=${PRODUCT_ID_ES2}"
     echo_log 1 "TYPE=${TYPE[@]}"
     echo_log 1 "VERSION=${VERSION[@]}"
     echo_log 1 "FRAME=${FRAME}"
@@ -548,8 +550,8 @@ function check_fw_type()
 function check_fw_version()
 {
     if [[ -z ${VERSION} ]]; then
-        # if no version was defined, let's generate both
-        VERSION=("es2" "es3")
+        # if no version was defined, generate only es3
+        VERSION=("es3")
         echo_log 1 "Warning: 'version' was not defined, assuming '${VERSION[@]}'"
     else
         list_contains "svc" "${TYPE[@]}" && \
@@ -644,29 +646,39 @@ function create_nuttx_tftf_module()
 {
     local unipro_pid=
     local extra_arg=
+    local vendor_id product_id
 
     [[ -z ${VENDOR_ID} ]] && die "A vendor_id should be defined for this target"
-    [[ -z ${PRODUCT_ID} ]] && die "A product_id should be defined for this target"
+    vendor_id=${VENDOR_ID}
 
     if [[ "${VERSION_CUR}" == "es2" ]]; then
         # *PBridge ES2
+        [[ -z ${PRODUCT_ID_ES2} ]] && die "A product_id_es2 should be defined for this target"
+        product_id=${PRODUCT_ID_ES2}
         unipro_pid="0x1000"
         extra_arg="--no-hamming-balance"
-    elif [[ "${TYPE_CUR}" == "apb" ]]; then
-        # APBridge ES3
-        unipro_pid="0x1001"
+        vendor_id=$((${vendor_id} & 0xffff))
+        product_id=$((${product_id} & 0xffff))
     else
-        # GPBridge ES3
-        unipro_pid="0x1002"
+        # ES3
+        [[ -z ${PRODUCT_ID} ]] && die "A product_id should be defined for this target"
+        product_id=${PRODUCT_ID}
+        if [[ "${TYPE_CUR}" == "apb" ]]; then
+            # APBridge ES3
+            unipro_pid="0x1001"
+        else
+            # GPBridge ES3
+            unipro_pid="0x1002"
+        fi
     fi
 
     # craft the filename for the tftf image and put it back in $2
     local tftf_filename=$(printf "ara_%.8x_%.8x_%.8x_%.8x_02.tftf" \
-        ${TOSHIBA_MIPI_MID} ${unipro_pid} ${VENDOR_ID} ${PRODUCT_ID})
+        ${TOSHIBA_MIPI_MID} ${unipro_pid} ${vendor_id} ${product_id})
     printf -v "${2}" '%s' "${BUILD_DIR_OUT}/${tftf_filename}"
 
     _create_nuttx_tftf "${1}" "${!2}" "${unipro_pid}" \
-        "${extra_arg} --ara-vid ${VENDOR_ID} --ara-pid ${PRODUCT_ID}"
+        "${extra_arg} --ara-vid ${vendor_id} --ara-pid ${product_id}"
 }
 
 function create_nuttx_ffff_module()
