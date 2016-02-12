@@ -758,6 +758,7 @@ function nuttx_image_create()
                             local nuttx_elf="${BUILD_DIR_OUT}/nuttx.elf"
                             local nuttx_ffff="${BUILD_DIR_OUT}/nuttx-${TYPE_CUR}-${VERSION_CUR}.ffff"
                             nuttx_copy_binary "nuttx" "${nuttx_elf}"
+                            bootrom_tools_compile_create_tftf
                             bootrom_tools_compile_create_ffff
                             create_nuttx_ffff_frame "${nuttx_elf}" "${nuttx_ffff}"
                             truncate_binary_file "${nuttx_ffff}"
@@ -787,6 +788,7 @@ function nuttx_image_create()
                     ;;
                 es3)
                     for TYPE_CUR in ${TYPE[@]}; do
+                        bootrom_tools_compile_create_tftf
                         bootrom_tools_compile_create_ffff
                         create_nuttx_tftf_module "${nuttx_elf}" nuttx_tftf
                         image_congrats "Module ES3" "${nuttx_tftf}"
