@@ -7,3 +7,4 @@ product_id	= 0xffee0011
 product_id_es2	= 0x0001
 
 version		= es3 es2
+type		= apb
