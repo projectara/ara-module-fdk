@@ -1061,6 +1061,7 @@ static int camera_op_set_streams_cfg(struct device *dev, uint8_t *num_streams,
 {
     struct sensor_info *info = device_get_private(dev);
     const struct ov5645_mode_info *cfg;
+    struct csi_rx_config csi_rx_cfg;
     uint8_t i;
     int ret;
 
@@ -1129,7 +1130,9 @@ static int camera_op_set_streams_cfg(struct device *dev, uint8_t *num_streams,
     }
 
     /* Initialize the CSI receiver. */
-    csi_rx_init(info->cdsidev, NULL);
+    csi_rx_cfg.vchan = 0;
+    csi_rx_cfg.num_lanes = 2;
+    csi_rx_init(info->cdsidev, &csi_rx_cfg);
 
     return 0;
 }
