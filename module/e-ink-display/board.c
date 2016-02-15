@@ -38,12 +38,29 @@
 #include <nuttx/hid.h>
 #include <nuttx/util.h>
 
+static struct device_resource eink_board_resources[] = {
+    {
+        .name  = "eink pageup",
+        .type  = DEVICE_RESOURCE_TYPE_GPIO,
+        .start = 0,
+        .count = 1,
+    },
+    {
+        .name  = "eink pagedown",
+        .type  = DEVICE_RESOURCE_TYPE_GPIO,
+        .start = 9,
+        .count = 1,
+    },
+};
+
 static struct device devices[] = {
     {
         .type           = DEVICE_TYPE_HID_HW,
         .name           = HID_DEVICE_NAME,
         .desc           = HID_DRIVER_DESCRIPTION,
         .id             = 0,
+        .resources      = eink_board_resources,
+        .resource_count = ARRAY_SIZE(eink_board_resources),
     },
 };
 

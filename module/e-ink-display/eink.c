@@ -40,20 +40,27 @@
 #include <nuttx/hid.h>
 #include <nuttx/util.h>
 
-#define MAX_IO_INPUT            2       /* two buttons for this module */
-#define GPIO_KBDPAGEUP          0
-#define GPIO_KBDPAGEDOWN        9
 #define KEYCODE_PAGEUP          0x4B    /* KEY_PAGEUP */
 #define KEYCODE_PAGEDOWN        0x4E    /* KEY_PAGEDOWN */
 #define DEFAULT_MODIFIER        0
 
-#define DEBOUNCE_TIMEING        25      /* 250ms (1 SysTick = 10ms) */
-#define COMMAND_INTERVAL        1000    /* 1ms */
+#define DEBOUNCE_TIMING         25      /* 250ms (1 SysTick = 10ms) */
 
-#define VENDORID                0x18D1  /* need discussion */
-#define PRODUCTID               0x1234  /* need discussion */
+#define VENDORID                0x0004
+#define PRODUCTID               0x0001
 
 #define HID_REPORT_DESC_LEN     35
+
+/* GPIO buttons */
+struct hid_btn_desc_s {
+    int gpio;
+    int keycode;
+};
+
+struct hid_btn_desc_s buttons[] = {
+    {.keycode = KEYCODE_PAGEUP},
+    {.keycode = KEYCODE_PAGEDOWN}
+};
 
 /**
  * Private information for buttons
@@ -65,23 +72,11 @@ struct button_info {
     /** Connected GPIO number */
     uint16_t gpio;
 
-    /** Latest valid keyboard interrupt time */
-    uint32_t last_activetime;
-
     /** Latest valid keyboard state */
     uint8_t last_keystate;
 
     /** The keycode for this button returned */
-    uint8_t Keycode;
-
-    /** Notifying debounce count start */
-    sem_t active_debounce;
-
-    /** Handler for debounce count thread */
-    pthread_t pthread_handler;
-
-    /** inform the thread should be terminated */
-    uint8_t thread_stop;
+    uint8_t keycode;
 };
 
 /**
@@ -185,138 +180,6 @@ static struct button_info *eink_get_info(struct device *dev, uint16_t gpio)
 }
 
 /**
- * @brief Routine for all keys debounce check
- *
- * @param dev Pointer to structure of device data
- * @param btn_info Pointer to structure of button_info
- */
-static void btn_debounce_check_loop(struct device *dev,
-                                    struct button_info *btn_info)
-{
-    struct hid_info *info = device_get_private(dev);
-    struct hid_kbd_data kbd;
-    uint32_t elapsed = 0, cur_time = 0;
-    uint8_t value = 0;
-
-    for (;;) {
-        /* verify key status is still same during counting */
-        value = gpio_get_value(btn_info->gpio);
-        if (value != btn_info->last_keystate) {
-            btn_info->last_keystate = value;
-            break;
-        }
-
-        /* count > 250mS routine */
-        cur_time = clock_systimer();
-        if (cur_time < btn_info->last_activetime) {
-            elapsed = cur_time + (0xFFFFFFFF - btn_info->last_activetime) + 1;
-            /* Ticks overflow, reset last_activatime to current ticks */
-            btn_info->last_activetime = cur_time;
-        } else {
-            elapsed = cur_time - btn_info->last_activetime;
-        }
-
-        if (elapsed > DEBOUNCE_TIMEING) {
-            kbd.modifier = 0;
-            kbd.keycode = btn_info->last_keystate ? btn_info->Keycode : 0;
-
-            if (info->event_callback) {
-                info->event_callback(dev, HID_INPUT_REPORT, (uint8_t*)&kbd,
-                                     sizeof(struct hid_kbd_data));
-            }
-            break;
-        } else {
-            usleep(COMMAND_INTERVAL);
-        }
-    }
-}
-
-/**
- * @brief Debounce check thread for PAGEDOWN
- *
- * @param dev Pointer to structure of device data
- */
-static void *btn_pgdn_bebounce_thread(void *data)
-{
-    struct device *dev = eink_dev;
-    struct button_info *btn_info = (struct button_info *) data;
-
-    if (!btn_info) {
-        return NULL;
-    }
-
-    while (1) {
-        sem_wait(&btn_info->active_debounce);
-
-        if (btn_info->thread_stop) {
-            break;
-        }
-
-        btn_debounce_check_loop(dev, btn_info);
-    }
-
-    return NULL;
-}
-
-/**
- * @brief Debounce check thread for PAGEUP
- *
- * @param dev Pointer to structure of device data
- */
-static void *btn_pgup_bebounce_thread(void *data)
-{
-    struct device *dev = eink_dev;
-    struct button_info *btn_info = (struct button_info *) data;
-
-    if (!btn_info) {
-        return NULL;
-    }
-
-    while (1) {
-        sem_wait(&btn_info->active_debounce);
-
-        if (btn_info->thread_stop) {
-            break;
-        }
-
-        btn_debounce_check_loop(dev, btn_info);
-    }
-
-    return NULL;
-}
-
-/**
- * @brief Enable GPIO signal debounce filter
- *
- * @param dev Pointer to structure of device data
- * @param btn_info Pointer to structure of button_info
- * @param irq IRQ number.
- * @return 0 on success, negative errno on error
- */
-static int btn_software_debounce(struct device *dev,
-                                 struct button_info *btn_info, int irq)
-{
-    uint8_t value = 0;
-
-    gpio_irq_mask(irq);
-
-    value = gpio_get_value(btn_info->gpio);
-
-    /* check whether the key state change or not */
-    if (btn_info->last_keystate != value) {
-        btn_info->last_keystate = value;
-
-        /* Enable counting thread */
-        btn_info->last_activetime = clock_systimer();
-        sem_post(&btn_info->active_debounce);
-    }
-
-    gpio_irq_unmask(irq);
-
-    return 0;
-}
-
-/**
  * @brief HID device keys interrupt routing
  *
  * @param irq IRQ number, same as GPIO number.
@@ -325,9 +188,12 @@ static int btn_software_debounce(struct device *dev,
  */
 static int eink_handle_btn_irq_event(int irq, FAR void *context)
 {
+
+    struct hid_info *info = device_get_private(eink_dev);
+    struct hid_kbd_data kbd;
     struct device *dev = eink_dev;
     struct button_info *btn_info = NULL;
-    int ret = 0;
+    int value;
 
     if (!dev || !device_get_private(dev)) {
         return ERROR;
@@ -338,10 +204,24 @@ static int eink_handle_btn_irq_event(int irq, FAR void *context)
         return ERROR;
     }
 
-    ret = btn_software_debounce(dev, btn_info, irq);
-    if (ret) {
-        return -EAGAIN;
+    gpio_irq_mask(irq);
+
+    value = gpio_get_value(btn_info->gpio);
+
+    /* check whether the key state change or not */
+    if (btn_info->last_keystate != value) {
+        btn_info->last_keystate = value;
+
+        kbd.modifier = 0;
+        kbd.keycode = btn_info->last_keystate ? btn_info->keycode : 0;
+
+        if (info->event_callback) {
+            info->event_callback(dev, HID_INPUT_REPORT, (uint8_t*)&kbd,
+                                 sizeof(struct hid_kbd_data));
+       }
     }
+
+    gpio_irq_unmask(irq);
 
     return OK;
 }
@@ -388,13 +268,6 @@ static int eink_get_input_report(struct device *dev, enum hid_report_type report
  */
 static void eink_gpio_deinit(struct button_info *btn_info)
 {
-    if (btn_info->pthread_handler != (pthread_t)0) {
-        btn_info->thread_stop = 1;
-        sem_post(&btn_info->active_debounce);
-        pthread_join(btn_info->pthread_handler, NULL);
-    }
-
-    sem_destroy(&btn_info->active_debounce);
     gpio_irq_mask(btn_info->gpio);
     gpio_deactivate(btn_info->gpio);
     list_del(&btn_info->list);
@@ -408,75 +281,53 @@ static void eink_gpio_deinit(struct button_info *btn_info)
  */
 static void eink_gpios_deinit(struct device *dev)
 {
+    struct hid_info *info = device_get_private(dev);
     struct button_info *btn_info = NULL;
+    struct list_head *iter;
 
-    btn_info = eink_get_info(dev, GPIO_KBDPAGEUP);
-    if (btn_info)
-        eink_gpio_deinit(btn_info);
-
-    btn_info = eink_get_info(dev, GPIO_KBDPAGEDOWN);
-    if (btn_info)
-        eink_gpio_deinit(btn_info);
+    list_foreach(&info->device_list, iter) {
+        btn_info = list_entry(iter, struct button_info, list);
+        if (btn_info) {
+            eink_gpio_deinit(btn_info);
+            iter = &info->device_list;
+        }
+    }
 
     return;
 }
 
 /**
- * @brief Initialze buttons GPIO
+ * @brief Initialize button
  *
  * @param dev Pointer to structure of device data
- * @param gpio The gpio number for initialize
+ * @param index The index of hid_btn_desc_s table
  */
-static int eink_gpio_init(struct device *dev, uint16_t gpio)
+static int eink_gpio_init(struct device *dev, uint16_t index)
 {
     struct hid_info *info = device_get_private(dev);
     struct button_info *btn_info = NULL;
+    int gpio = buttons[index].gpio;
     int ret = 0;
 
-    if (gpio != GPIO_KBDPAGEUP && gpio != GPIO_KBDPAGEDOWN) {
-        return -EIO;
+    ret = gpio_activate(gpio);
+    if (ret != 0) {
+        return ret;
     }
 
     btn_info = zalloc(sizeof(*btn_info));
-    if (!btn_info)
+    if (!btn_info) {
         return -ENOMEM;
+    }
 
     btn_info->gpio = gpio;
-
-    ret = gpio_activate(gpio);
-    if (ret != 0)
-        return ret;
     gpio_direction_in(gpio);
     gpio_irq_mask(gpio);
     gpio_irq_settriggering(gpio, IRQ_TYPE_EDGE_BOTH);
-    sem_init(&btn_info->active_debounce, 0, 0);
+    gpio_set_debounce(gpio, DEBOUNCE_TIMING);
+    btn_info->keycode = buttons[index].keycode;
+    gpio_irq_attach(gpio, eink_handle_btn_irq_event);
     list_add(&info->device_list, &btn_info->list);
 
-    if (gpio == GPIO_KBDPAGEUP) {
-        btn_info->Keycode = KEYCODE_PAGEUP;
-        ret = pthread_create(&btn_info->pthread_handler, NULL,
-                             btn_pgup_bebounce_thread, btn_info);
-        if (ret) {
-            goto err_gpio_init;
-        }
-        gpio_irq_attach(gpio, eink_handle_btn_irq_event);
-
-    } else if (gpio == GPIO_KBDPAGEDOWN) {
-        btn_info->Keycode = KEYCODE_PAGEDOWN;
-        ret = pthread_create(&btn_info->pthread_handler, NULL,
-                             btn_pgdn_bebounce_thread, btn_info);
-        if (ret) {
-            goto err_gpio_init;
-        }
-        gpio_irq_attach(gpio, eink_handle_btn_irq_event);
-    } else {
-        goto err_gpio_init;
-    }
-
-    return ret;
-
-err_gpio_init:
-    eink_gpios_deinit(dev);
     return ret;
 }
 
@@ -491,20 +342,32 @@ err_gpio_init:
 static int eink_hw_initialize(struct device *dev, struct hid_info *dev_info)
 {
     int ret = 0;
+    int i;
+    struct device_resource *r;
 
-    /* initialize GPIO pin */
-    if (GPIO_KBDPAGEUP >= gpio_line_count() ||
-        GPIO_KBDPAGEDOWN >= gpio_line_count()) {
-        return -EIO;
+    for (i = 0; i < ARRAY_SIZE(buttons); i++) {
+        r = device_resource_get(dev, DEVICE_RESOURCE_TYPE_GPIO, i);
+        if (!r ) {
+            goto err_hw_init;
+        }
+        /* initialize GPIO pin */
+        if (r->start >= gpio_line_count()) {
+            goto err_hw_init;
+        }
+
+        buttons[i].gpio = r->start;
+
+        ret = eink_gpio_init(dev, i);
+        if (ret) {
+            goto err_hw_init;
+        }
     }
 
-    ret = eink_gpio_init(dev, GPIO_KBDPAGEUP);
-    if (ret)
-        return ret;
+    return ret;
 
-    ret = eink_gpio_init(dev, GPIO_KBDPAGEDOWN);
-    if (ret)
-        return ret;
+err_hw_init:
+    eink_gpios_deinit(dev);
+    return ret;
 }
 
 /**
@@ -522,20 +385,46 @@ static int eink_hw_deinitialize(struct device *dev)
     return 0;
 }
 
+/**
+ * @brief Set eink hardware power
+ *
+ * @param dev Pointer to structure of device data
+ * @param on true for ON, false for OFF
+ *
+ * @return 0 on success, negative errno on error
+ */
 static int eink_power_set(struct device *dev, bool on)
 {
-    if (on) {
-        /* enable interrupt */
-        gpio_irq_unmask(GPIO_KBDPAGEUP);
-        gpio_irq_unmask(GPIO_KBDPAGEDOWN);
-    } else {
-        gpio_irq_mask(GPIO_KBDPAGEUP);
-        gpio_irq_mask(GPIO_KBDPAGEDOWN);
+    struct hid_info *info = device_get_private(dev);
+    struct button_info *btn_info = NULL;
+    struct list_head *iter;
+
+    list_foreach(&info->device_list, iter) {
+        btn_info = list_entry(iter, struct button_info, list);
+        if (btn_info) {
+            if (on) {
+                /* enable interrupt */
+                gpio_irq_unmask(btn_info->gpio);
+            } else {
+                gpio_irq_mask(btn_info->gpio);
+            }
+        }
     }
 
     return 0;
 }
 
+/**
+ * @brief Process get report requirement
+ *
+ * @param dev Pointer to structure of device data
+ * @param report_type Required report type
+ * @param report_id Required report id
+ * @param data Pointer to a Data buffer
+ * @param len Length for required
+ *
+ * @return 0 on success, negative errno on error
+ */
 static int eink_get_report(struct device *dev, enum hid_report_type report_type,
                            uint8_t report_id, uint8_t *data, uint16_t len)
 {
