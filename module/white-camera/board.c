@@ -1037,7 +1037,7 @@ static int camera_op_capabilities(struct device *dev, size_t *size,
                                   const uint8_t **caps)
 {
     /* TODO: Not implemented yet. */
-    *capabilities = NULL;
+    *caps = NULL;
     *size = 0;
 
     return 0;
