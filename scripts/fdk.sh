@@ -622,7 +622,7 @@ function _create_nuttx_tftf()
     run_log 2 ${BOOTROM_TOOLS_DIR}/bin/create-tftf \
         --verbose \
         --type s2fw \
-        --name "${TARGET_BASE}-tftf" \
+        --name "${TARGET_NAME}" \
         --elf "${1}" \
         --out "${2}" \
         --unipro-mfg "${TOSHIBA_MIPI_MID}" \
@@ -639,7 +639,7 @@ function _create_nuttx_ffff()
     echo_log 1 "# Create FFFF image from ${1} to ${2}"
     run_log 2 ${BOOTROM_TOOLS_DIR}/bin/create-ffff \
         --verbose \
-        --name "${TARGET_BASE}-ffff" \
+        --name "${TARGET_NAME}" \
         --header-size 0x1000 \
         --generation 1  \
         --flash-capacity 0x40000 \
@@ -750,7 +750,7 @@ function nuttx_image_create()
         TYPE_CUR="${TYPE[0]}"
         case "${TYPE_CUR}" in
             svc)
-                local nuttx_bin="${BUILD_DIR_OUT}/nuttx.bin"
+                local nuttx_bin="${BUILD_DIR_OUT}/nuttx-${TARGET_NAME}.bin"
                 nuttx_copy_binary "nuttx.bin" "${nuttx_bin}"
                 image_congrats "SVC" "${nuttx_bin}"
                 ;;
@@ -759,14 +759,15 @@ function nuttx_image_create()
                 for VERSION_CUR in ${VERSION[@]}; do
                     case "${VERSION_CUR}" in
                         es2)
-                            local nuttx_bin="${BUILD_DIR_OUT}/nuttx.bin"
+                            local
+                            nuttx_bin="${BUILD_DIR_OUT}/nuttx-${TARGET_NAME}-${VERSION_CUR}.bin"
                             nuttx_copy_binary "nuttx.bin" "${nuttx_bin}"
                             truncate_binary_file "${nuttx_bin}"
                             image_congrats "Frame APB" "${nuttx_bin}"
                             ;;
                         es3)
                             local nuttx_elf="${BUILD_DIR_OUT}/nuttx.elf"
-                            local nuttx_ffff="${BUILD_DIR_OUT}/nuttx-${TYPE_CUR}-${VERSION_CUR}.ffff"
+                            local nuttx_ffff="${BUILD_DIR_OUT}/nuttx-${TARGET_NAME}-${VERSION_CUR}.ffff"
                             nuttx_copy_binary "nuttx" "${nuttx_elf}"
                             bootrom_tools_compile_create_tftf
                             bootrom_tools_compile_create_ffff
@@ -1016,6 +1017,7 @@ function run_command()
 {
     for TARGET in "${TARGETS[@]}"; do
         TARGET_BASE=$(dirname "${TARGET}")
+        TARGET_NAME=$(basename "${TARGET_BASE}")
         case ${CMD} in
             clean)
                 cmd_clean
