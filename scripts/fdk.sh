@@ -37,11 +37,11 @@ set -o pipefail
 SCRIPT_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd )
 
 # default paths
-FDK_DIR="${FDK_FDK_DIR:-./fdk}"
-NUTTX_DIR="${FDK_NUTTX_DIR:-./nuttx}"
-BOOTROM_DIR="${FDK_BOOTROM_DIR:-./bootrom}"
-BOOTROM_TOOLS_DIR="${FDK_BOOTROM_TOOLS_DIR:-./bootrom-tools}"
-MANIFESTO_DIR="${FDK_MANIFESTO_DIR:-./manifesto}"
+FDK_DIR="${FDK_FDK_DIR:-fdk}"
+NUTTX_DIR="${FDK_NUTTX_DIR:-nuttx}"
+BOOTROM_DIR="${FDK_BOOTROM_DIR:-bootrom}"
+BOOTROM_TOOLS_DIR="${FDK_BOOTROM_TOOLS_DIR:-bootrom-tools}"
+MANIFESTO_DIR="${FDK_MANIFESTO_DIR:-manifesto}"
 
 CROSS_COMPILE_DIR=${FDK_CROSS_COMPILE_DIR:-./arm-none-eabi-4.9/bin}
 
