@@ -250,7 +250,7 @@ function get_var_mk()
 # 1: name of variable to get from mk target file
 # returns the exit status of the make command
 {
-    TARGET=${TARGET} make -f - ${1}.var <<'EOF'
+    TARGET=${TARGET} make --quiet -f - ${1}.var <<'EOF'
 include $(TARGET)
 %.var:
 	@echo $($*)
