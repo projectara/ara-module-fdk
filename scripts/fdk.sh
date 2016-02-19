@@ -134,6 +134,9 @@ USAGE
 function die()
 {
     echo "Error: $@" >&2
+    if [[ -n ${LOG_FILE} ]]; then
+        echo "Log of the failing build can be found in ${LOG_FILE}" >&2
+    fi
     exit 1
 }
 
@@ -161,7 +164,7 @@ function _run_log()
         else
             # print both in console and log file, if verbosity is high enough
             ${echo_cmd} && echo "${@}" | tee -a ${LOG_FILE}
-            ${@} | tee -a ${LOG_FILE}
+            ${@} 2>&1 | tee -a ${LOG_FILE}
         fi
     else
         if [[ -z ${LOG_FILE} ]]; then
@@ -170,7 +173,7 @@ function _run_log()
         else
             # print only in log file
             ${echo_cmd} && echo "${@}" | tee -a ${LOG_FILE} > /dev/null
-            ${@} | tee -a ${LOG_FILE} > /dev/null
+            ${@} 2>&1 | tee -a ${LOG_FILE} > /dev/null
         fi
     fi
 
