@@ -288,6 +288,9 @@ function read_target_mk()
     echo_log 1 "TYPE=${TYPE[@]}"
     echo_log 1 "VERSION=${VERSION[@]}"
     echo_log 1 "FRAME=${FRAME}"
+
+    [[ -n "${CONFIG_FILE}" ]] || \
+        die "'config' is not defined. Please correct your mk target file."
 }
 
 ### Build dir management
