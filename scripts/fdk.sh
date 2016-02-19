@@ -396,11 +396,11 @@ function nuttx_prepare()
     BUILD_DIR_OUT="${BUILD_DIR_PATH}/out"
     echo_build_dir "${BUILD_DIR_OUT}"
 
-    if [[ ! -z ${MANIFEST_FILE} ]]; then
+    if [[ -n ${MANIFEST_FILE} ]]; then
         BUILD_DIR_MANIFEST="${BUILD_DIR_PATH}/manifest"
         echo_build_dir "${BUILD_DIR_MANIFEST}"
     fi
-    if [[ ! -z ${BOARD_FILES} ]]; then
+    if [[ -n ${BOARD_FILES} ]]; then
         BUILD_DIR_MODULE="${BUILD_DIR_PATH}/module"
         echo_build_dir "${BUILD_DIR_MODULE}"
     fi
@@ -414,12 +414,12 @@ function nuttx_prepare()
     run_log 2 cp -r ${NUTTX_DIR}/misc ${BUILD_DIR_NUTTX}/misc || \
         die "Cannot copy ${NUTTX_DIR}/misc directory"
 
-    if [[ ! -z ${MANIFEST_FILE} ]]; then
+    if [[ -n ${MANIFEST_FILE} ]]; then
         echo_log 1 "# Copying manifest file"
         run_log 2 cp "${MANIFEST_FILE/#/${TARGET_BASE}/}" ${BUILD_DIR_MANIFEST} || \
             die "Cannot copy manifest file"
     fi
-    if [[ ! -z ${BOARD_FILES} ]]; then
+    if [[ -n ${BOARD_FILES} ]]; then
         echo_log 1 "# Copying board-specific files"
         run_log 2 cp "${BOARD_FILES[@]/#/${TARGET_BASE}/}" ${BUILD_DIR_MODULE} || \
             die "Cannot boards-specific files"
@@ -443,10 +443,10 @@ function nuttx_clean()
     # Remove directory hierarchy
     echo_remove_dir "${BUILD_DIR_NUTTX}"
     echo_remove_dir "${BUILD_DIR_OUT}"
-    if [[ ! -z ${MANIFEST_FILE} ]]; then
+    if [[ -n ${MANIFEST_FILE} ]]; then
         echo_remove_dir "${BUILD_DIR_MANIFEST}"
     fi
-    if [[ ! -z ${BOARD_FILES} ]]; then
+    if [[ -n ${BOARD_FILES} ]]; then
         echo_remove_dir "${BUILD_DIR_MODULE}"
     fi
 }
@@ -489,11 +489,11 @@ function _nuttx_export_vars()
     _export_versions
     _export_build_name
 
-    if [[ ! -z ${MANIFEST_FILE} ]]; then
+    if [[ -n ${MANIFEST_FILE} ]]; then
         local pwd_manifest=$(cd ${BUILD_DIR_MANIFEST} >/dev/null && pwd)
         export OOT_MANIFEST="${MANIFEST_FILE/#/${pwd_manifest}/}"
     fi
-    if [[ ! -z ${BOARD_FILES} ]]; then
+    if [[ -n ${BOARD_FILES} ]]; then
         local pwd_module=$(cd ${BUILD_DIR_MODULE} >/dev/null && pwd)
         export OOT_BOARD="${BOARD_FILES[@]/#/${pwd_module}/}"
     fi
@@ -751,7 +751,7 @@ function nuttx_image_create()
     check_fw_version || \
         die "The specified firmware versions are incorrect: ${VERSION[@]}"
 
-    if [[ ! -z "${FRAME}" ]]; then
+    if [[ -n "${FRAME}" ]]; then
         # Frame firmware (SVC, APB1, APB2)
         TYPE_CUR="${TYPE[0]}"
         case "${TYPE_CUR}" in
